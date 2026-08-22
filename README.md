@@ -1,6 +1,6 @@
 # WP FileBrowser
 
-![Logo WP FileBrowser](assets/img/icon1024x1024.png)
+<img src="assets/img/icon1024x1024.png" alt="Logo WP FileBrowser" width="200" height="200">
 
 Un navigateur de fichiers pour WordPress, propulsé par Symfony Finder et Twig.
 
