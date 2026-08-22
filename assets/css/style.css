@@ -1,8 +1,64 @@
+/* ========================================
+   WP FileBrowser – Styles complets
+   ======================================== */
+
+/* --- Conteneur principal --- */
 .wpfb-filebrowser {
-    width: 80%;
     max-width: 100%;
     box-sizing: border-box;
+    overflow: auto;
+    height: var(--wpfb-height, auto) !important; /* géré par le style inline */
 }
+
+/* --- Barre d'outils (sticky) --- */
+.wpfb-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #f1f1f1;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+/* --- Boutons de la barre d'outils --- */
+.wpfb-toolbar .wpfb-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;                     /* espace entre l'icône et le texte */
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 5px 12px;
+    font-size: 13px;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+.wpfb-toolbar .wpfb-btn:hover {
+    background: #e9e9e9;
+}
+.wpfb-toolbar .wpfb-btn:active {
+    background: #d5d5d5;
+}
+
+/* --- Statut et indicateur de presse-papiers --- */
+.wpfb-status {
+    margin-left: 10px;
+    font-weight: bold;
+    flex: 1;
+}
+#wpfb-clipboard-indicator {
+    margin-left: 10px;
+    color: #0073aa;
+}
+
+/* --- Fil d'Ariane (breadcrumb) --- */
 .wpfb-breadcrumb {
     padding: 10px;
     background: #f5f5f5;
@@ -13,135 +69,98 @@
     text-decoration: none;
     color: #0073aa;
 }
+
+/* --- Liste des fichiers --- */
 .wpfb-list {
     list-style: none;
     padding: 0;
+    margin: 0;
 }
+
+/* --- Élément de la liste --- */
 .wpfb-item {
-    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
     border-bottom: 1px solid #eee;
 }
 .wpfb-item.is-dir a {
     font-weight: bold;
     color: #2c3e50;
 }
-.wpfb-item .file-size,
-.wpfb-item .file-date {
-    color: #888;
-    font-size: 0.9em;
-    margin-left: 10px;
-}
-.wpfb-empty {
-    color: #999;
-    font-style: italic;
-}
-
-.wpfb-toolbar {
-    background: #f1f1f1;
-    padding: 8px 12px;
-    border-radius: 4px;
-    margin-bottom: 15px;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
-}
-.wpfb-btn {
-    background: #fff;
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    padding: 5px 12px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-.wpfb-btn:hover {
-    background: #e9e9e9;
-}
-.wpfb-btn:active {
-    background: #d5d5d5;
-}
-.wpfb-status {
-    margin-left: 10px;
-    font-weight: bold;
-    flex: 1;
-}
-.wpfb-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 5px 0;
-}
 .wpfb-item-checkbox {
     margin-right: 5px;
+    flex-shrink: 0;
 }
+
+/* --- Contenu des fichiers (icône + nom) --- */
+.wpfb-item-content,
+.wpfb-item-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+}
+
+/* --- Icônes génériques --- */
 .wpfb-item-icon {
-    font-size: 18px;
+    font-size: 20px;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-right: 5px;
 }
+.wpfb-pdf-icon {
+    font-size: 24px;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-right: 5px;
+}
+
+/* --- Nom du fichier --- */
 .wpfb-item-name {
     font-weight: normal;
     font-size: 0.9em;
+    line-height: 1.4;
+    word-break: break-word;
 }
 .wpfb-item.is-dir .wpfb-item-name {
     font-weight: bold;
 }
-.wpfb-item-size, .wpfb-item-date {
+
+/* --- Taille et date --- */
+.wpfb-item-size,
+.wpfb-item-date {
     color: #888;
     font-size: 0.8em;
     margin-left: 5px;
+    flex-shrink: 0;
 }
-.wpfb-rename-wrapper {
-    display: inline-flex;
-    gap: 5px;
-}
-.wpfb-rename-input {
-    border: 1px solid #ccc;
-    border-radius: 3px;
-    padding: 2px 6px;
-}
-.wpfb-rename-confirm, .wpfb-rename-cancel {
-    background: none;
-    border: none;
+
+/* --- Miniature d'image --- */
+.wpfb-thumbnail-wrapper {
+    position: relative;
+    display: inline-block;
     cursor: pointer;
-    font-size: 14px;
+    flex-shrink: 0;
+    line-height: 1;
 }
 .wpfb-thumbnail {
     width: 24px;
     height: 24px;
     object-fit: cover;
     border-radius: 4px;
-    vertical-align: middle;
     border: 1px solid #e0e0e0;
     background: #fff;
-    margin-right: 8px;
-}
-.wpfb-pdf-icon {
-    font-size: 24px;
-    margin-right: 5px;
-}
-.wpfb-item-icon {
-    font-size: 20px;
-    margin-right: 5px;
-}
-.wpfb-item-content {
-    display: flex;
-    align-items: center;
-    flex: 1;
-    gap: 8px;
-}
-.wpfb-item-name {
-    word-break: break-word;
-}
-.wpfb-thumbnail-wrapper {
-    position: relative;
-    display: inline-block;
-    cursor: pointer;
+    vertical-align: middle;
+    display: block;
 }
 
+/* --- Zoom au survol --- */
 .wpfb-thumbnail-zoom {
     position: absolute;
     top: 0;
-    left: calc(100% + 10px);  /* décalage vers la droite */
+    left: calc(100% + 10px);
     z-index: 999;
     display: none;
     background: #fff;
@@ -153,11 +172,9 @@
     max-width: 300px;
     max-height: 300px;
 }
-
 .wpfb-thumbnail-wrapper:hover .wpfb-thumbnail-zoom {
     display: block;
 }
-
 .wpfb-thumbnail-zoom img {
     display: block;
     max-width: 100%;
@@ -166,16 +183,31 @@
     height: auto;
     border-radius: 2px;
 }
-.wpfb-filebrowser {
-    max-width: 100%;
-    overflow: auto;
-    box-sizing: border-box;
-    height: var(--wpfb-height, auto) !important;
+
+/* --- Zone de renommage --- */
+.wpfb-rename-wrapper {
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
 }
-.wpfb-toolbar {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    background: #f1f1f1; /* important pour masquer le contenu défilant derrière */
-    /* les autres propriétés (display: flex, etc.) restent inchangées */
+.wpfb-rename-input {
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-size: 0.9em;
+}
+.wpfb-rename-confirm,
+.wpfb-rename-cancel {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+}
+
+/* --- Message "vide" --- */
+.wpfb-empty {
+    color: #999;
+    font-style: italic;
+    padding: 10px 0;
 }
