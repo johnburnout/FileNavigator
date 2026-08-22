@@ -3,7 +3,7 @@
  * Plugin Name: WP FileBrowser
  * Description: Navigateur de fichiers avec shortcode, Symfony Finder, Twig et barre d'outils (upload, download, copier, couper, coller, supprimer, renommer).
  * Version: 1.1.0
- * Author: Votre nom
+ * Author: Jean Roussie
  * Icon: assets/img/icon.svg
  */
 
@@ -16,23 +16,22 @@ require_once __DIR__ . '/vendor/autoload.php';
 define('WPFB_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WPFB_PLUGIN_URL', plugin_dir_url(__FILE__));
 
-// Enregistrer la shortcode
 add_action('init', function() {
     add_shortcode('filebrowser', ['WPFB\Shortcode\FileBrowserShortcode', 'render']);
 });
 
-// Charger les assets (CSS/JS)
 add_action('wp_enqueue_scripts', function() {
     wp_enqueue_style('wpfb-style', WPFB_PLUGIN_URL . 'assets/css/style.css');
     wp_enqueue_script('wpfb-script', WPFB_PLUGIN_URL . 'assets/js/main.js', ['jquery'], '1.1', true);
 });
 
 // ================================
-// Gestion des requêtes AJAX
+// AJAX endpoints
 // ================================
 
 add_action('wp_ajax_wpfb_upload', 'wpfb_ajax_upload');
-add_action('wp_ajax_wpfb_download', 'wpfb_ajax_download');
+add_action('wp_ajax_wpfb_download', 'wpfb_ajax_download'); // on garde wp_ajax_nopriv aussi pour non connectés
+add_action('wp_ajax_nopriv_wpfb_download', 'wpfb_ajax_download'); // autoriser les non connectés
 add_action('wp_ajax_wpfb_delete', 'wpfb_ajax_delete');
 add_action('wp_ajax_wpfb_rename', 'wpfb_ajax_rename');
 add_action('wp_ajax_wpfb_paste', 'wpfb_ajax_paste');
@@ -61,13 +60,9 @@ function wpfb_ajax_upload() {
     }
 }
 
-// ---------- DOWNLOAD ----------
+// ---------- DOWNLOAD (public) ----------
 function wpfb_ajax_download() {
-    check_ajax_referer('wpfb_ajax_nonce', 'nonce');
-    if (!current_user_can('read')) {
-        wp_die('Permission refusée.');
-    }
-
+    // Pas de vérification de capacité pour autoriser tout le monde
     $paths = isset($_GET['paths']) ? json_decode(stripslashes($_GET['paths']), true) : [];
     if (empty($paths)) {
         wp_die('Aucun fichier sélectionné.');
@@ -172,7 +167,7 @@ function wpfb_ajax_paste() {
     }
 }
 
-// ---------- MK (make directory) ----------
+// ---------- MKDIR ----------
 function wpfb_ajax_mkdir() {
     check_ajax_referer('wpfb_ajax_nonce', 'nonce');
     if (!current_user_can('edit_posts')) {

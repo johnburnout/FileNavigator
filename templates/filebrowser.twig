@@ -4,15 +4,31 @@
      data-nonce="{{ nonce }}">
     <!-- Barre d'outils -->
     <div class="wpfb-toolbar">
-        <button class="wpfb-btn wpfb-btn-upload" title="Uploader des fichiers">📤 UL</button>
-        <input type="file" id="wpfb-upload-input" multiple style="display:none;">
-        <button class="wpfb-btn wpfb-btn-download" title="Télécharger les fichiers sélectionnés">⬇️ DL</button>
-        <button class="wpfb-btn wpfb-btn-copy" title="Copier les fichiers sélectionnés">📋 Copier</button>
-        <button class="wpfb-btn wpfb-btn-cut" title="Couper les fichiers sélectionnés">✂️ Couper</button>
-        <button class="wpfb-btn wpfb-btn-paste" title="Coller (copier ou déplacer)">📎 Coller</button>
-        <button class="wpfb-btn wpfb-btn-rename" title="Renommer le fichier sélectionné">✏️ Renommer</button>
-        <button class="wpfb-btn wpfb-btn-mkdir" title="Créer un nouveau dossier">📁 Nouveau dossier</button>
-        <button class="wpfb-btn wpfb-btn-delete" title="Supprimer les fichiers sélectionnés">🗑️ Supprimer</button>
+        {% if permissions.can_upload %}
+            <button class="wpfb-btn wpfb-btn-upload" title="Uploader des fichiers">⬆️ UL</button>
+            <input type="file" id="wpfb-upload-input" multiple style="display:none;">
+        {% endif %}
+        {% if permissions.can_download %}
+            <button class="wpfb-btn wpfb-btn-download" title="Télécharger les fichiers sélectionnés">⬇️ DL</button>
+        {% endif %}
+        {% if permissions.can_copy %}
+            <button class="wpfb-btn wpfb-btn-copy" title="Copier les fichiers sélectionnés">📋 Copier</button>
+        {% endif %}
+        {% if permissions.can_cut %}
+            <button class="wpfb-btn wpfb-btn-cut" title="Couper les fichiers sélectionnés">✂️ Couper</button>
+        {% endif %}
+        {% if permissions.can_paste %}
+            <button class="wpfb-btn wpfb-btn-paste" title="Coller (copier ou déplacer)">📎 Coller</button>
+        {% endif %}
+        {% if permissions.can_rename %}
+            <button class="wpfb-btn wpfb-btn-rename" title="Renommer le fichier sélectionné">✏️ Renommer</button>
+        {% endif %}
+        {% if permissions.can_mkdir %}
+            <button class="wpfb-btn wpfb-btn-mkdir" title="Créer un nouveau dossier">📁 Nouveau dossier</button>
+        {% endif %}
+        {% if permissions.can_delete %}
+            <button class="wpfb-btn wpfb-btn-delete" title="Supprimer les fichiers sélectionnés">🗑️ Supprimer</button>
+        {% endif %}
         <span class="wpfb-status" id="wpfb-status"></span>
         <span id="wpfb-clipboard-indicator" style="display:none; margin-left:10px; color:#0073aa;">📋 Contenu du presse-papiers</span>
     </div>
@@ -33,22 +49,37 @@
                 data-is-dir="{{ item.isDir ? 'true' : 'false' }}">
                 
                 <input type="checkbox" class="wpfb-item-checkbox" data-path="{{ item.relative|e }}">
-
+                
                 {% if item.isDir %}
                     {# Dossier : lien cliquable #}
-                    <a href="{{ add_query_arg('fb_dir', item.relative)|esc_url }}" 
-                        onclick="window.location.href=this.href; return false;">
+                    <a href="{{ add_query_arg('fb_dir', item.relative)|esc_url }}" class="wpfb-item-link">
                         <span class="wpfb-item-icon">📁</span>
                         <span class="wpfb-item-name">{{ item.name|e }}</span>
                     </a>
                 {% else %}
-                    {# Fichier : pas de lien, juste affichage #}
-                    <span class="wpfb-item-icon">📄</span>
-                    <span class="wpfb-item-name">{{ item.name|e }}</span>
+                    {# Fichier : affichage avec icône ou vignette #}
+                    {% set ext = item.name|split('.')|last|lower %}
+                    {% set file_url = item.relative|wpfb_file_url(root_path) %}
+                    
+                    <span class="wpfb-item-content">
+                        {% if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                            <span class="wpfb-thumbnail-wrapper">
+                                <img src="{{ file_url }}" alt="{{ item.name }}" class="wpfb-thumbnail">
+                                <span class="wpfb-thumbnail-zoom">
+                                    <img src="{{ file_url }}" alt="Aperçu">
+                                </span>
+                            </span>
+                        {% elseif ext == 'pdf' %}
+                            <span class="wpfb-item-icon wpfb-pdf-icon">📑</span>
+                        {% else %}
+                            <span class="wpfb-item-icon">📄</span>
+                        {% endif %}
+                        <span class="wpfb-item-name">{{ item.name|e }}</span>
+                    </span>
                     <span class="wpfb-item-size">({{ item.size|size_format }})</span>
                     <span class="wpfb-item-date">{{ item.mtime|date_i18n(get_option('date_format')) }}</span>
                 {% endif %}
-
+                
                 <!-- Champ de renommage (caché) -->
                 <span class="wpfb-rename-wrapper" style="display:none;">
                     <input type="text" class="wpfb-rename-input" value="{{ item.name|e }}">
