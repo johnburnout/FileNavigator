@@ -57,6 +57,10 @@ class FileBrowserShortcode
             'width' => '100%',      // largeur par défaut
             'height' => '400px',    // hauteur par défaut (avec barre de défilement)
         ], $atts, 'filebrowser');
+        
+        // Remplacer les valeurs des attributs par celles de l'URL si présentes
+        $atts['sort'] = isset($_GET['sort']) ? sanitize_text_field($_GET['sort']) : $atts['sort'];
+        $atts['order'] = isset($_GET['order']) ? sanitize_text_field($_GET['order']) : $atts['order'];
 
         $rootPath = self::getRootPath($atts['root']);
         if (!$rootPath || !is_dir($rootPath)) {
@@ -108,6 +112,8 @@ class FileBrowserShortcode
                 'permissions' => $permissions,
                 'container_width' => $atts['width'],
                 'container_height' => $atts['height'],
+                'current_sort' => $atts['sort'],
+                'current_order' => $atts['order'],
             ]);
 
         } catch (\Exception $e) {

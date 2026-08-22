@@ -227,6 +227,16 @@
                 });
             });
             
+            // ---------- TRI ----------
+            $('.wpfb-sort-select, .wpfb-order-select').on('change', function() {
+                const sort = $('#wpfb-sort-select').val();
+                const order = $('#wpfb-order-select').val();
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.set('sort', sort);
+                currentUrl.searchParams.set('order', order);
+                window.location.href = currentUrl.toString();
+            });
+            
             // ---------- NOUVEAU DOSSIER ----------
             $('.wpfb-btn-mkdir').on('click', function() {
                 const dirName = prompt('Nom du nouveau dossier :');

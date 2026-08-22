@@ -211,3 +211,18 @@
     font-style: italic;
     padding: 10px 0;
 }
+.wpfb-sort-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 10px;
+    font-size: 13px;
+}
+.wpfb-sort-group select {
+    padding: 3px 6px;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+    background: #fff;
+    font-size: 12px;
+    cursor: pointer;
+}

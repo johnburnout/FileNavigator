@@ -30,6 +30,19 @@
         {% if permissions.can_delete %}
             <button class="wpfb-btn wpfb-btn-delete" title="Supprimer les fichiers sélectionnés">🗑️ Supprimer</button>
         {% endif %}
+        <!-- Tri -->
+        <span class="wpfb-sort-group">
+            <label for="wpfb-sort-select">Trier par</label>
+            <select id="wpfb-sort-select" class="wpfb-sort-select">
+                <option value="name" {{ current_sort == 'name' ? 'selected' : '' }}>Nom</option>
+                <option value="size" {{ current_sort == 'size' ? 'selected' : '' }}>Taille</option>
+                <option value="mtime" {{ current_sort == 'mtime' ? 'selected' : '' }}>Date</option>
+            </select>
+            <select id="wpfb-order-select" class="wpfb-order-select">
+                <option value="asc" {{ current_order == 'asc' ? 'selected' : '' }}>↗️</option>
+                <option value="desc" {{ current_order == 'desc' ? 'selected' : '' }}>↘️</option>
+            </select>
+        </span>
         <span class="wpfb-status" id="wpfb-status"></span>
         <span id="wpfb-clipboard-indicator" style="display:none; margin-left:10px; color:#0073aa;">📋 Contenu du presse-papiers</span>
     </div>
@@ -78,7 +91,7 @@
                         <span class="wpfb-item-name">{{ item.name|e }}</span>
                     </span>
                     <span class="wpfb-item-size">({{ item.size|size_format }})</span>
-                    <span class="wpfb-item-date">{{ item.mtime|date_i18n(get_option('date_format')) }}</span>
+                    <span class="wpfb-item-date">{{ date_i18n('d/m/Y H:i', item.mtime) }}</span>
                 {% endif %}
                 
                 <!-- Champ de renommage (caché) -->
