@@ -15,9 +15,6 @@ class FileBrowserService
         $this->security = new SecurityChecker($this->rootPath);
     }
 
-    /**
-     * Retourne la liste des fichiers/dossiers dans le répertoire $dir (chemin relatif ou absolu).
-     */
     public function listDirectory(string $dir = '', array $options = []): array
     {
         $defaults = [
@@ -27,7 +24,7 @@ class FileBrowserService
             'show_hidden' => false,
         ];
         $options = array_merge($defaults, $options);
-        
+
         $currentDir = $this->buildAbsolutePath($dir);
         if (!$this->security->isPathSafe($currentDir)) {
             throw new \RuntimeException('Chemin non autorisé');
@@ -35,14 +32,14 @@ class FileBrowserService
         if (!is_dir($currentDir)) {
             throw new \RuntimeException('Le répertoire n\'existe pas');
         }
-        
+
         $finder = new Finder();
         $finder->in($currentDir)->depth(0);
-        
+
         if (!$options['show_hidden']) {
             $finder->notName('/^\..*$/');
         }
-        
+
         // Tri selon l'option
         switch ($options['sort']) {
             case 'size':
@@ -56,43 +53,68 @@ class FileBrowserService
                 $finder->sortByName();
                 break;
         }
-        
+
         if ($options['order'] === 'desc') {
             $finder->reverseSorting();
         }
-        
+
         $items = [];
         foreach ($finder as $fileInfo) {
-            // Filtrage par extension (pour les fichiers)
+            // Filtrer par extension pour les fichiers
             if (!empty($options['extensions']) && $fileInfo->isFile()) {
                 $ext = pathinfo($fileInfo->getFilename(), PATHINFO_EXTENSION);
                 if (!in_array(strtolower($ext), array_map('strtolower', $options['extensions']))) {
                     continue;
                 }
             }
+
+            // 🔧 Correction : utiliser is_dir() sur le chemin réel pour une détection fiable
+//          $realPath = $fileInfo->getPathname();
+//          $isDir = is_dir($realPath);
+//
+//          // Calcul du chemin relatif (sécurisé)
+//          $relative = Path::makeRelative($realPath, $this->rootPath);
+//          // Si le chemin relatif commence par '..', on le recalcule manuellement
+//          if (strpos($relative, '..') === 0) {
+//              $relative = ltrim(str_replace($this->rootPath, '', $realPath), '/');
+//              // Si le résultat est vide, on met le nom de base
+//              if (empty($relative)) {
+//                  $relative = $fileInfo->getFilename();
+//              }
+            
+            $realPath = $fileInfo->getPathname();
+            $isDir = is_dir($realPath);
+            
+            // Calcul du chemin relatif (robuste)
+            $relative = Path::makeRelative($realPath, $this->rootPath);
+            if (strpos($relative, '..') === 0 || $relative === '') {
+                // Recalcul manuel
+                $relative = ltrim(str_replace($this->rootPath, '', $realPath), '/');
+                if (empty($relative)) {
+                    $relative = $fileInfo->getFilename();
+                }
+            }
+
             $items[] = [
                 'name' => $fileInfo->getFilename(),
-                'path' => $fileInfo->getPathname(),
-                'relative' => Path::makeRelative($fileInfo->getPathname(), $this->rootPath),
-                'isDir' => $fileInfo->isDir(),
+                'path' => $realPath,
+                'relative' => $relative,
+                'isDir' => $isDir,
                 'size' => $fileInfo->isFile() ? $fileInfo->getSize() : 0,
                 'mtime' => $fileInfo->getMTime(),
                 'isHidden' => $fileInfo->getFilename()[0] === '.',
             ];
         }
-        
+
         return $items;
     }
 
     private function buildAbsolutePath(string $relative): string
     {
-        // Nettoyer les '..' et autres
         $safe = Path::canonicalize($relative);
-        // Si le chemin est vide ou '.', on prend la racine
         if ($safe === '' || $safe === '.') {
             return $this->rootPath;
         }
-        // Sinon, on construit absolu
         return Path::makeAbsolute($safe, $this->rootPath);
     }
 }

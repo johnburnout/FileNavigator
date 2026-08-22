@@ -1,6 +1,7 @@
 .wpfb-filebrowser {
-    font-family: sans-serif;
-    margin: 15px 0;
+    width: 80%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 .wpfb-breadcrumb {
     padding: 10px;
@@ -33,4 +34,73 @@
 .wpfb-empty {
     color: #999;
     font-style: italic;
+}
+
+.wpfb-toolbar {
+    background: #f1f1f1;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+.wpfb-btn {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 5px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.wpfb-btn:hover {
+    background: #e9e9e9;
+}
+.wpfb-btn:active {
+    background: #d5d5d5;
+}
+.wpfb-status {
+    margin-left: 10px;
+    font-weight: bold;
+    flex: 1;
+}
+.wpfb-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+}
+.wpfb-item-checkbox {
+    margin-right: 5px;
+}
+.wpfb-item-icon {
+    font-size: 18px;
+}
+.wpfb-item-name {
+    font-weight: normal;
+}
+.wpfb-item.is-dir .wpfb-item-name {
+    font-weight: bold;
+}
+.wpfb-item-size, .wpfb-item-date {
+    color: #888;
+    font-size: 0.9em;
+    margin-left: 5px;
+}
+.wpfb-rename-wrapper {
+    display: inline-flex;
+    gap: 5px;
+}
+.wpfb-rename-input {
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    padding: 2px 6px;
+}
+.wpfb-rename-confirm, .wpfb-rename-cancel {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
 }

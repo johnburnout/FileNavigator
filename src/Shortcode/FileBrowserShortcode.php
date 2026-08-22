@@ -7,33 +7,27 @@ class FileBrowserShortcode
 {
     private static ?\Twig\Environment $twig = null;
 
-    /**
-     * Initialise l'environnement Twig avec le dossier templates/
-     * et enregistre les fonctions WordPress utiles.
-     */
     private static function getTwig(): \Twig\Environment
     {
         if (self::$twig === null) {
             $loader = new \Twig\Loader\FilesystemLoader(WPFB_PLUGIN_DIR . 'templates');
-        self::$twig = new \Twig\Environment($loader, [
+            self::$twig = new \Twig\Environment($loader, [
                 'cache' => false,
                 'autoescape' => 'html',
             ]);
-            
-            // ---- Fonctions (appelables avec {{ function(...) }}) ----
-        self::$twig->addFunction(new \Twig\TwigFunction('size_format', 'size_format'));
-        self::$twig->addFunction(new \Twig\TwigFunction('date_i18n', 'date_i18n'));
-        self::$twig->addFunction(new \Twig\TwigFunction('add_query_arg', 'add_query_arg'));
-        self::$twig->addFunction(new \Twig\TwigFunction('get_option', 'get_option'));
-            
-            // ---- Filtres (utilisables avec {{ variable|filter }}) ----
-        self::$twig->addFilter(new \Twig\TwigFilter('esc_url', 'esc_url'));
-        self::$twig->addFilter(new \Twig\TwigFilter('esc_html', 'esc_html'));
-        self::$twig->addFilter(new \Twig\TwigFilter('esc_attr', 'esc_attr'));
-            
-            // ⬇️ Ajout des deux filtres manquants
-        self::$twig->addFilter(new \Twig\TwigFilter('size_format', 'size_format'));
-        self::$twig->addFilter(new \Twig\TwigFilter('date_i18n', 'date_i18n'));
+
+            // Fonctions
+            self::$twig->addFunction(new \Twig\TwigFunction('size_format', 'size_format'));
+            self::$twig->addFunction(new \Twig\TwigFunction('date_i18n', 'date_i18n'));
+            self::$twig->addFunction(new \Twig\TwigFunction('add_query_arg', 'add_query_arg'));
+            self::$twig->addFunction(new \Twig\TwigFunction('get_option', 'get_option'));
+
+            // Filtres
+            self::$twig->addFilter(new \Twig\TwigFilter('esc_url', 'esc_url'));
+            self::$twig->addFilter(new \Twig\TwigFilter('esc_html', 'esc_html'));
+            self::$twig->addFilter(new \Twig\TwigFilter('esc_attr', 'esc_attr'));
+            self::$twig->addFilter(new \Twig\TwigFilter('size_format', 'size_format'));
+            self::$twig->addFilter(new \Twig\TwigFilter('date_i18n', 'date_i18n'));
         }
         return self::$twig;
     }
@@ -49,17 +43,13 @@ class FileBrowserShortcode
         ], $atts, 'filebrowser');
 
         $rootPath = self::getRootPath($atts['root']);
-        error_log('=== DEBUG getRootPath ===');
-        error_log('Root path: ' . $rootPath);
-        error_log('is_dir: ' . (is_dir($rootPath) ? 'true' : 'false'));
-        error_log('file_exists: ' . (file_exists($rootPath) ? 'true' : 'false'));
-        
         if (!$rootPath || !is_dir($rootPath)) {
             return '<p style="color:red;">Erreur : dossier racine invalide.</p>';
         }
 
         $currentDir = isset($_GET['fb_dir']) ? sanitize_text_field($_GET['fb_dir']) : '';
         $currentDir = str_replace('..', '', $currentDir);
+        error_log('fb_dir reçu : ' . $currentDir);
 
         $extensions = array_map('trim', explode(',', $atts['extensions']));
         $extensions = array_filter($extensions);
@@ -74,15 +64,21 @@ class FileBrowserShortcode
         try {
             $service = new FileBrowserService($rootPath);
             $items = $service->listDirectory($currentDir, $options);
+            error_log('Nombre d\'éléments : ' . count($items));
+            foreach ($items as $item) {
+                error_log(' - ' . $item['name'] . ' (isDir=' . ($item['isDir'] ? 'true' : 'false') . ', relative=' . $item['relative'] . ')');
+            }
             $breadcrumb = self::buildBreadcrumb($rootPath, $currentDir);
 
-            // Rendu via Twig
+            // Passer le rootPath au template pour l'utiliser dans les appels AJAX
             $twig = self::getTwig();
             return $twig->render('filebrowser.twig', [
                 'items' => $items,
                 'breadcrumb' => $breadcrumb,
                 'current_dir' => $currentDir,
-                // 'get' => $_GET,  // <-- supprimez cette ligne
+                'root_path' => $rootPath, // important pour JS
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('wpfb_ajax_nonce'),
             ]);
 
         } catch (\Exception $e) {
@@ -93,32 +89,31 @@ class FileBrowserShortcode
     private static function getRootPath(string $rootParam): string
     {
         $upload_dir = wp_upload_dir();
-        $base = $upload_dir['basedir'];
-        
+        $base = realpath($upload_dir['basedir']) ?: $upload_dir['basedir'];
+
         if (empty($rootParam)) {
             return $base;
         }
-        
+
         // Si c'est un chemin absolu (commence par /)
         if (strpos($rootParam, '/') === 0) {
-            return $rootParam;
+            return realpath($rootParam) ?: $rootParam;
         }
-        
+
         // Sinon, on le considère relatif au dossier uploads
         $path = $base . '/' . ltrim($rootParam, '/');
-        
-        // Si le chemin existe, on le retourne
-        if (is_dir($path) || is_file($path)) {
-            return $path;
+        $real = realpath($path);
+        if ($real !== false && (is_dir($real) || is_file($real))) {
+            return $real;
         }
-        
-        // Fallback : essayer à la racine de WordPress (pour compatibilité)
+
+        // Fallback : essayer à la racine de WordPress
         $fallback = ABSPATH . ltrim($rootParam, '/');
         if (is_dir($fallback) || is_file($fallback)) {
             return $fallback;
         }
-        
-        // Si rien n'existe, on retourne le chemin dans uploads (le service vérifiera)
+
+        // Retourner le chemin même s'il n'existe pas (le service lèvera une exception)
         return $path;
     }
 

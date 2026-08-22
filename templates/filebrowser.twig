@@ -1,26 +1,60 @@
-<div class="wpfb-filebrowser">
+<div class="wpfb-filebrowser" 
+     data-root="{{ root_path }}" 
+     data-ajaxurl="{{ ajax_url }}" 
+     data-nonce="{{ nonce }}">
+    <!-- Barre d'outils -->
+    <div class="wpfb-toolbar">
+        <button class="wpfb-btn wpfb-btn-upload" title="Uploader des fichiers">📤 UL</button>
+        <input type="file" id="wpfb-upload-input" multiple style="display:none;">
+        <button class="wpfb-btn wpfb-btn-download" title="Télécharger les fichiers sélectionnés">⬇️ DL</button>
+        <button class="wpfb-btn wpfb-btn-copy" title="Copier les fichiers sélectionnés">📋 Copier</button>
+        <button class="wpfb-btn wpfb-btn-cut" title="Couper les fichiers sélectionnés">✂️ Couper</button>
+        <button class="wpfb-btn wpfb-btn-paste" title="Coller (copier ou déplacer)">📎 Coller</button>
+        <button class="wpfb-btn wpfb-btn-rename" title="Renommer le fichier sélectionné">✏️ Renommer</button>
+        <button class="wpfb-btn wpfb-btn-mkdir" title="Créer un nouveau dossier">📁 Nouveau dossier</button>
+        <button class="wpfb-btn wpfb-btn-delete" title="Supprimer les fichiers sélectionnés">🗑️ Supprimer</button>
+        <span class="wpfb-status" id="wpfb-status"></span>
+        <span id="wpfb-clipboard-indicator" style="display:none; margin-left:10px; color:#0073aa;">📋 Contenu du presse-papiers</span>
+    </div>
+
+    <!-- Breadcrumb -->
     <div class="wpfb-breadcrumb">
         {% for crumb in breadcrumb %}
             {% if not loop.first %} / {% endif %}
-            <a href="{{ add_query_arg('fb_dir', crumb.path)|esc_url }}">
-                {{ crumb.label|e }}
-            </a>
+            <a href="{{ add_query_arg('fb_dir', crumb.path)|esc_url }}">{{ crumb.label|e }}</a>
         {% endfor %}
     </div>
 
+    <!-- Liste -->
     <ul class="wpfb-list">
         {% for item in items %}
-            <li class="wpfb-item {{ item.isDir ? 'is-dir' : 'is-file' }}">
+            <li class="wpfb-item {{ item.isDir ? 'is-dir' : 'is-file' }}" 
+                data-path="{{ item.relative|e }}" 
+                data-is-dir="{{ item.isDir ? 'true' : 'false' }}">
+                
+                <input type="checkbox" class="wpfb-item-checkbox" data-path="{{ item.relative|e }}">
+
                 {% if item.isDir %}
-                    <a href="{{ add_query_arg('fb_dir', item.relative)|esc_url }}">
-                        📁 {{ item.name|e }}
+                    {# Dossier : lien cliquable #}
+                    <a href="{{ add_query_arg('fb_dir', item.relative)|esc_url }}" 
+                        onclick="window.location.href=this.href; return false;">
+                        <span class="wpfb-item-icon">📁</span>
+                        <span class="wpfb-item-name">{{ item.name|e }}</span>
                     </a>
                 {% else %}
-                    <span class="file-icon">📄</span>
-                    <span class="file-name">{{ item.name|e }}</span>
-                    <span class="file-size">({{ item.size|size_format }})</span>
-                    <span class="file-date">{{ item.mtime|date_i18n(get_option('date_format')) }}</span>
+                    {# Fichier : pas de lien, juste affichage #}
+                    <span class="wpfb-item-icon">📄</span>
+                    <span class="wpfb-item-name">{{ item.name|e }}</span>
+                    <span class="wpfb-item-size">({{ item.size|size_format }})</span>
+                    <span class="wpfb-item-date">{{ item.mtime|date_i18n(get_option('date_format')) }}</span>
                 {% endif %}
+
+                <!-- Champ de renommage (caché) -->
+                <span class="wpfb-rename-wrapper" style="display:none;">
+                    <input type="text" class="wpfb-rename-input" value="{{ item.name|e }}">
+                    <button class="wpfb-rename-confirm">✅</button>
+                    <button class="wpfb-rename-cancel">❌</button>
+                </span>
             </li>
         {% else %}
             <li class="wpfb-empty">Aucun fichier ou dossier trouvé.</li>
