@@ -1,0 +1,29 @@
+<div class="wpfb-filebrowser">
+    <div class="wpfb-breadcrumb">
+        {% for crumb in breadcrumb %}
+            {% if not loop.first %} / {% endif %}
+            <a href="{{ add_query_arg('fb_dir', crumb.path)|esc_url }}">
+                {{ crumb.label|e }}
+            </a>
+        {% endfor %}
+    </div>
+
+    <ul class="wpfb-list">
+        {% for item in items %}
+            <li class="wpfb-item {{ item.isDir ? 'is-dir' : 'is-file' }}">
+                {% if item.isDir %}
+                    <a href="{{ add_query_arg('fb_dir', item.relative)|esc_url }}">
+                        📁 {{ item.name|e }}
+                    </a>
+                {% else %}
+                    <span class="file-icon">📄</span>
+                    <span class="file-name">{{ item.name|e }}</span>
+                    <span class="file-size">({{ item.size|size_format }})</span>
+                    <span class="file-date">{{ item.mtime|date_i18n(get_option('date_format')) }}</span>
+                {% endif %}
+            </li>
+        {% else %}
+            <li class="wpfb-empty">Aucun fichier ou dossier trouvé.</li>
+        {% endfor %}
+    </ul>
+</div>

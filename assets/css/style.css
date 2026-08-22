@@ -1,0 +1,36 @@
+.wpfb-filebrowser {
+    font-family: sans-serif;
+    margin: 15px 0;
+}
+.wpfb-breadcrumb {
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+.wpfb-breadcrumb a {
+    text-decoration: none;
+    color: #0073aa;
+}
+.wpfb-list {
+    list-style: none;
+    padding: 0;
+}
+.wpfb-item {
+    padding: 5px 10px;
+    border-bottom: 1px solid #eee;
+}
+.wpfb-item.is-dir a {
+    font-weight: bold;
+    color: #2c3e50;
+}
+.wpfb-item .file-size,
+.wpfb-item .file-date {
+    color: #888;
+    font-size: 0.9em;
+    margin-left: 10px;
+}
+.wpfb-empty {
+    color: #999;
+    font-style: italic;
+}

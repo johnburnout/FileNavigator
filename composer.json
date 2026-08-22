@@ -1,0 +1,12 @@
+{
+    "require": {
+        "symfony/finder": "^6.0",
+        "symfony/filesystem": "^6.0",
+        "twig/twig": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "WPFB\\": "src/"
+        }
+    }
+}
