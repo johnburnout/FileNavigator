@@ -1,5 +1,7 @@
 # WP FileBrowser
 
+![Logo WP FileBrowser](assets/img/icon1024x1024.png)
+
 Un navigateur de fichiers pour WordPress, propulsé par Symfony Finder et Twig.
 
 ## Fonctionnalités
