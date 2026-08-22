@@ -130,6 +130,6 @@ Mise à jour majeure avec tri dynamique, aperçu des images, barre d'outils fixe
 
 Le plugin est open‑source. Les contributions sont les bienvenues sur GitHub :
 
-[https://github.com/johnburnout/WP-FileNavigator](https://github.com/johnburnout/WP-FileNavigator)
+[https://github.com/johnburnout/FileNavigator](https://github.com/johnburnout/FileNavigator)
 
 Merci d'utiliser File Navigator ! 🚀

@@ -132,15 +132,15 @@ add_filter('WPFN_permissions', function($perms) {
 ### Installation locale
 
 ```bash
-git clone https://github.com/johnburnout/WP-FileNavigator.git
-cd WP-FileNavigator
+git clone https://github.com/johnburnout/FileNavigator.git
+cd FileNavigator
 composer install
 ```
 
 ### Structure du projet
 
 ```
-wp-filenavigator/
+filenavigator/
 ├── assets/
 │   ├── css/style.css
 │   └── js/main.js
@@ -156,7 +156,7 @@ wp-filenavigator/
 ├── vendor/                (généré par Composer)
 ├── composer.json
 ├── composer.lock
-├── wp-filenavigator.php
+├── filenavigator.php
 ├── README.md
 └── readme.txt
 ```
@@ -220,7 +220,7 @@ Les contributions sont les bienvenues !
 
 ## 🐛 Signaler un bug
 
-Utilisez l’onglet [Issues](https://github.com/johnburnout/WP-FileNavigator/issues) de GitHub.
+Utilisez l’onglet [Issues](https://github.com/johnburnout/FileNavigator/issues) de GitHub.
 
 ---
 
