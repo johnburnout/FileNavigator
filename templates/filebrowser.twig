@@ -1,7 +1,8 @@
 <div class="wpfb-filebrowser" 
      data-root="{{ root_path }}" 
      data-ajaxurl="{{ ajax_url }}" 
-     data-nonce="{{ nonce }}">
+     data-nonce="{{ nonce }}"
+     style="width: {{ container_width }}; height: {{ container_height }}; max-height: {{ container_height }}; overflow: auto; box-sizing: border-box;">
     <!-- Barre d'outils -->
     <div class="wpfb-toolbar">
         {% if permissions.can_upload %}

@@ -166,3 +166,16 @@
     height: auto;
     border-radius: 2px;
 }
+.wpfb-filebrowser {
+    max-width: 100%;
+    overflow: auto;
+    box-sizing: border-box;
+    height: var(--wpfb-height, auto) !important;
+}
+.wpfb-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #f1f1f1; /* important pour masquer le contenu défilant derrière */
+    /* les autres propriétés (display: flex, etc.) restent inchangées */
+}

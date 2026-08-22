@@ -53,7 +53,9 @@ class FileBrowserShortcode
             'sort' => 'name',
             'order' => 'asc',
             'show_hidden' => 'false',
-            'public_download' => 'true', // nouveau paramètre
+            'public_download' => 'true',
+            'width' => '100%',      // largeur par défaut
+            'height' => '400px',    // hauteur par défaut (avec barre de défilement)
         ], $atts, 'filebrowser');
 
         $rootPath = self::getRootPath($atts['root']);
@@ -104,6 +106,8 @@ class FileBrowserShortcode
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce('wpfb_ajax_nonce'),
                 'permissions' => $permissions,
+                'container_width' => $atts['width'],
+                'container_height' => $atts['height'],
             ]);
 
         } catch (\Exception $e) {
