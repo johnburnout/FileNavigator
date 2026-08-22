@@ -1,5 +1,5 @@
 <?php
-namespace WPFB\FileBrowser;
+namespace WPFN\FileNavigator;
 
 use Symfony\Component\Filesystem\Path;
 

@@ -1,5 +1,5 @@
 <?php
-namespace WPFB\FileBrowser;
+namespace WPFN\FileNavigator;
 
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Path;
@@ -126,7 +126,7 @@ class FileOperationService
         }
 
         $zip = new \ZipArchive();
-        $tempFile = tempnam(sys_get_temp_dir(), 'wpfb_');
+        $tempFile = tempnam(sys_get_temp_dir(), 'WPFN_');
         if ($zip->open($tempFile, \ZipArchive::CREATE) !== true) {
             throw new \RuntimeException('Impossible de créer le ZIP.');
         }

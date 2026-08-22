@@ -1,10 +1,10 @@
 <?php
-namespace WPFB\FileBrowser;
+namespace WPFN\FileNavigator;
 
 use Symfony\Component\Finder\Finder;
 use Symfony\Component\Filesystem\Path;
 
-class FileBrowserService
+class FileNavigatorService
 {
     private string $rootPath;
     private SecurityChecker $security;

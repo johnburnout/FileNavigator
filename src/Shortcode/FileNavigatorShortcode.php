@@ -1,45 +1,44 @@
 <?php
-namespace WPFB\Shortcode;
+namespace WPFN\Shortcode;
 
-use WPFB\FileBrowser\FileBrowserService;
+use WPFN\FileNavigator\FileNavigatorService;
 
-class FileBrowserShortcode
+class FileNavigatorShortcode
 {
     private static ?\Twig\Environment $twig = null;
 
     private static function getTwig(): \Twig\Environment
     {
         if (self::$twig === null) {
-            $loader = new \Twig\Loader\FilesystemLoader(WPFB_PLUGIN_DIR . 'templates');
-        self::$twig = new \Twig\Environment($loader, [
+            $loader = new \Twig\Loader\FilesystemLoader(WPFN_PLUGIN_DIR . 'templates');
+            self::$twig = new \Twig\Environment($loader, [
                 'cache' => false,
                 'autoescape' => 'html',
             ]);
-            
+
             // Fonctions
-        self::$twig->addFunction(new \Twig\TwigFunction('size_format', 'size_format'));
-        self::$twig->addFunction(new \Twig\TwigFunction('date_i18n', 'date_i18n'));
-        self::$twig->addFunction(new \Twig\TwigFunction('add_query_arg', 'add_query_arg'));
-        self::$twig->addFunction(new \Twig\TwigFunction('get_option', 'get_option'));
-            
+            self::$twig->addFunction(new \Twig\TwigFunction('size_format', 'size_format'));
+            self::$twig->addFunction(new \Twig\TwigFunction('date_i18n', 'date_i18n'));
+            self::$twig->addFunction(new \Twig\TwigFunction('add_query_arg', 'add_query_arg'));
+            self::$twig->addFunction(new \Twig\TwigFunction('get_option', 'get_option'));
+
             // Filtres
-        self::$twig->addFilter(new \Twig\TwigFilter('esc_url', 'esc_url'));
-        self::$twig->addFilter(new \Twig\TwigFilter('esc_html', 'esc_html'));
-        self::$twig->addFilter(new \Twig\TwigFilter('esc_attr', 'esc_attr'));
-        self::$twig->addFilter(new \Twig\TwigFilter('size_format', 'size_format'));
-        self::$twig->addFilter(new \Twig\TwigFilter('date_i18n', 'date_i18n'));
-            
-            // 🔥 Nouveau filtre pour l'URL des fichiers
-        self::$twig->addFilter(new \Twig\TwigFilter('wpfb_file_url', function($relative, $rootPath) {
+            self::$twig->addFilter(new \Twig\TwigFilter('esc_url', 'esc_url'));
+            self::$twig->addFilter(new \Twig\TwigFilter('esc_html', 'esc_html'));
+            self::$twig->addFilter(new \Twig\TwigFilter('esc_attr', 'esc_attr'));
+            self::$twig->addFilter(new \Twig\TwigFilter('size_format', 'size_format'));
+            self::$twig->addFilter(new \Twig\TwigFilter('date_i18n', 'date_i18n'));
+
+            // Filtre pour l'URL des fichiers
+            self::$twig->addFilter(new \Twig\TwigFilter('WPFN_file_url', function($relative, $rootPath) {
                 if (empty($relative)) {
                     return '';
                 }
                 $absolute = $rootPath . '/' . ltrim($relative, '/');
-                // Si le chemin est dans ABSPATH, on le convertit en URL
                 if (strpos($absolute, ABSPATH) === 0) {
                     return home_url(str_replace(ABSPATH, '', $absolute));
                 }
-                return $absolute; // fallback
+                return $absolute;
             }));
         }
         return self::$twig;
@@ -54,11 +53,11 @@ class FileBrowserShortcode
             'order' => 'asc',
             'show_hidden' => 'false',
             'public_download' => 'true',
-            'width' => '100%',      // largeur par défaut
-            'height' => '400px',    // hauteur par défaut (avec barre de défilement)
-        ], $atts, 'filebrowser');
-        
-        // Remplacer les valeurs des attributs par celles de l'URL si présentes
+            'width' => '100%',
+            'height' => '400px',
+        ], $atts, 'filenavigator');
+
+        // Récupération des paramètres GET pour le tri
         $atts['sort'] = isset($_GET['sort']) ? sanitize_text_field($_GET['sort']) : $atts['sort'];
         $atts['order'] = isset($_GET['order']) ? sanitize_text_field($_GET['order']) : $atts['order'];
 
@@ -81,15 +80,15 @@ class FileBrowserShortcode
         ];
 
         try {
-            $service = new FileBrowserService($rootPath);
+            $service = new FileNavigatorService($rootPath);
             $items = $service->listDirectory($currentDir, $options);
             $breadcrumb = self::buildBreadcrumb($rootPath, $currentDir);
 
-            // --- Permissions avec filtre ---
+            // Permissions
             $public_download = filter_var($atts['public_download'], FILTER_VALIDATE_BOOLEAN);
             $permissions = [
                 'can_upload'   => current_user_can('upload_files'),
-                'can_download' => $public_download || current_user_can('read'), // public si paramètre true ou connecté
+                'can_download' => $public_download || current_user_can('read'),
                 'can_copy'     => current_user_can('edit_posts'),
                 'can_cut'      => current_user_can('edit_posts'),
                 'can_paste'    => current_user_can('edit_posts'),
@@ -97,18 +96,16 @@ class FileBrowserShortcode
                 'can_rename'   => current_user_can('edit_posts'),
                 'can_mkdir'    => current_user_can('edit_posts'),
             ];
-
-            // Filtre pour personnalisation externe
-            $permissions = apply_filters('wpfb_permissions', $permissions, $atts);
+            $permissions = apply_filters('WPFN_permissions', $permissions, $atts);
 
             $twig = self::getTwig();
-            return $twig->render('filebrowser.twig', [
+            return $twig->render('filenavigator.twig', [
                 'items' => $items,
                 'breadcrumb' => $breadcrumb,
                 'current_dir' => $currentDir,
                 'root_path' => $rootPath,
                 'ajax_url' => admin_url('admin-ajax.php'),
-                'nonce' => wp_create_nonce('wpfb_ajax_nonce'),
+                'nonce' => wp_create_nonce('WPFN_ajax_nonce'),
                 'permissions' => $permissions,
                 'container_width' => $atts['width'],
                 'container_height' => $atts['height'],

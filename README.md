@@ -1,6 +1,6 @@
-# WP FileBrowser
+# File Navigator
 
-<img src="assets/img/icon1024x1024.png" alt="Logo WP FileBrowser" width="200" height="200">
+<img src="assets/img/icon1024x1024.png" alt="Logo File Navigator" width="200" height="200">
 
 Un navigateur de fichiers pour WordPress, propulsé par **Symfony Finder**, **Twig** et une interface moderne.
 
@@ -42,7 +42,7 @@ Un navigateur de fichiers pour WordPress, propulsé par **Symfony Finder**, **Tw
 1. Téléchargez l’archive ZIP depuis votre dépôt ou la page de release.  
 2. Allez dans **Extensions → Ajouter → Téléverser une extension**.  
 3. Choisissez le fichier ZIP et cliquez sur **Installer maintenant**.  
-4. Activez l’extension **“WP FileBrowser”**.
+4. Activez l’extension **“File Navigator”**.
 
 ### Via FTP / SFTP
 
@@ -53,7 +53,7 @@ Un navigateur de fichiers pour WordPress, propulsé par **Symfony Finder**, **Tw
 
 ## 🧩 Utilisation de la shortcode
 
-Insérez la shortcode `[filebrowser]` dans n’importe quelle page ou article.
+Insérez la shortcode `[filenavigator]` dans n’importe quelle page ou article.
 
 ### Paramètres disponibles
 
@@ -81,23 +81,23 @@ Les paramètres sont conservés dans l’URL (`?sort=size&order=desc`) lors de l
 ### Exemples d’utilisation
 
 ```text
-[filebrowser]
+[filenavigator]
 ```
 Navigateur dans le dossier `uploads`, largeur 100%, hauteur 400px.  
 Date affichée en `JJ/MM/AAAA HH:MM`.
 
 ```text
-[filebrowser root="downloads" width="800px" height="600px" extensions="jpg,png,pdf"]
+[filenavigator root="downloads" width="800px" height="600px" extensions="jpg,png,pdf"]
 ```
 Explorer le dossier `uploads/downloads`, afficher uniquement les fichiers JPG, PNG et PDF.
 
 ```text
-[filebrowser root="/home/site/public_html/documents" sort="mtime" order="desc"]
+[filenavigator root="/home/site/public_html/documents" sort="mtime" order="desc"]
 ```
 Dossier absolu, tri par date de modification du plus récent au plus ancien.
 
 ```text
-[filebrowser public_download="false"]
+[filenavigator public_download="false"]
 ```
 Téléchargement uniquement autorisé aux utilisateurs connectés.
 
@@ -116,10 +116,10 @@ Téléchargement uniquement autorisé aux utilisateurs connectés.
 | Supprimer | `delete_posts` | Auteur |
 | Créer un dossier | `edit_posts` | Auteur |
 
-**Personnalisation** : utilisez le filtre `wpfb_permissions` dans votre `functions.php` pour modifier les droits.
+**Personnalisation** : utilisez le filtre `WPFN_permissions` dans votre `functions.php` pour modifier les droits.
 
 ```php
-add_filter('wpfb_permissions', function($perms) {
+add_filter('WPFN_permissions', function($perms) {
     $perms['can_delete'] = current_user_can('manage_options'); // admins seulement
     return $perms;
 });
@@ -132,31 +132,31 @@ add_filter('wpfb_permissions', function($perms) {
 ### Installation locale
 
 ```bash
-git clone https://github.com/johnburnout/WP-FileBrowser.git
-cd WP-FileBrowser
+git clone https://github.com/johnburnout/WP-FileNavigator.git
+cd WP-FileNavigator
 composer install
 ```
 
 ### Structure du projet
 
 ```
-wp-filebrowser/
+wp-filenavigator/
 ├── assets/
 │   ├── css/style.css
 │   └── js/main.js
 ├── src/
-│   ├── FileBrowser/
-│   │   ├── FileBrowserService.php
+│   ├── FileNavigator/
+│   │   ├── FileNavigatorService.php
 │   │   ├── FileOperationService.php
 │   │   └── SecurityChecker.php
 │   └── Shortcode/
-│       └── FileBrowserShortcode.php
+│       └── FileNavigatorShortcode.php
 ├── templates/
-│   └── filebrowser.twig
+│   └── filenavigator.twig
 ├── vendor/                (généré par Composer)
 ├── composer.json
 ├── composer.lock
-├── wp-filebrowser.php
+├── wp-filenavigator.php
 ├── README.md
 └── readme.txt
 ```
@@ -183,7 +183,7 @@ Les erreurs apparaîtront dans `wp-content/debug.log`.
 - Aperçu des images au survol avec zoom  
 - Icônes spécifiques pour les PDF  
 - Gestion des permissions par rôle WordPress  
-- Filtre `wpfb_permissions` pour personnalisation  
+- Filtre `WPFN_permissions` pour personnalisation  
 - Correction de la détection des dossiers (`is_dir`)  
 - Liens cliquables pour les dossiers  
 - **Tri dynamique** par nom, taille, date (menus déroulants)  
@@ -220,7 +220,7 @@ Les contributions sont les bienvenues !
 
 ## 🐛 Signaler un bug
 
-Utilisez l’onglet [Issues](https://github.com/johnburnout/WP-FileBrowser/issues) de GitHub.
+Utilisez l’onglet [Issues](https://github.com/johnburnout/WP-FileNavigator/issues) de GitHub.
 
 ---
 

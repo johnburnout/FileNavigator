@@ -1,0 +1,108 @@
+<div class="WPFN-filenavigator" 
+     data-root="{{ root_path }}" 
+     data-ajaxurl="{{ ajax_url }}" 
+     data-nonce="{{ nonce }}"
+     style="width: {{ container_width }}; height: {{ container_height }}; max-height: {{ container_height }}; overflow: auto; box-sizing: border-box;">
+    <!-- Barre d'outils -->
+    <div class="WPFN-toolbar">
+        {% if permissions.can_upload %}
+            <button class="WPFN-btn WPFN-btn-upload" title="Uploader des fichiers">⬆️ UL</button>
+            <input type="file" id="WPFN-upload-input" multiple style="display:none;">
+        {% endif %}
+        {% if permissions.can_download %}
+            <button class="WPFN-btn WPFN-btn-download" title="Télécharger les fichiers sélectionnés">⬇️ DL</button>
+        {% endif %}
+        {% if permissions.can_copy %}
+            <button class="WPFN-btn WPFN-btn-copy" title="Copier les fichiers sélectionnés">📋 Copier</button>
+        {% endif %}
+        {% if permissions.can_cut %}
+            <button class="WPFN-btn WPFN-btn-cut" title="Couper les fichiers sélectionnés">✂️ Couper</button>
+        {% endif %}
+        {% if permissions.can_paste %}
+            <button class="WPFN-btn WPFN-btn-paste" title="Coller (copier ou déplacer)">📎 Coller</button>
+        {% endif %}
+        {% if permissions.can_rename %}
+            <button class="WPFN-btn WPFN-btn-rename" title="Renommer le fichier sélectionné">✏️ Renommer</button>
+        {% endif %}
+        {% if permissions.can_mkdir %}
+            <button class="WPFN-btn WPFN-btn-mkdir" title="Créer un nouveau dossier">📁 Nouveau dossier</button>
+        {% endif %}
+        {% if permissions.can_delete %}
+            <button class="WPFN-btn WPFN-btn-delete" title="Supprimer les fichiers sélectionnés">🗑️ Supprimer</button>
+        {% endif %}
+        <!-- Tri -->
+        <span class="WPFN-sort-group">
+            <label for="WPFN-sort-select">Trier par</label>
+            <select id="WPFN-sort-select" class="WPFN-sort-select">
+                <option value="name" {{ current_sort == 'name' ? 'selected' : '' }}>Nom</option>
+                <option value="size" {{ current_sort == 'size' ? 'selected' : '' }}>Taille</option>
+                <option value="mtime" {{ current_sort == 'mtime' ? 'selected' : '' }}>Date</option>
+            </select>
+            <select id="WPFN-order-select" class="WPFN-order-select">
+                <option value="asc" {{ current_order == 'asc' ? 'selected' : '' }}>↗️</option>
+                <option value="desc" {{ current_order == 'desc' ? 'selected' : '' }}>↘️</option>
+            </select>
+        </span>
+        <span class="WPFN-status" id="WPFN-status"></span>
+        <span id="WPFN-clipboard-indicator" style="display:none; margin-left:10px; color:#0073aa;">📋 Contenu du presse-papiers</span>
+    </div>
+
+    <!-- Breadcrumb -->
+    <div class="WPFN-breadcrumb">
+        {% for crumb in breadcrumb %}
+            {% if not loop.first %} / {% endif %}
+            <a href="{{ add_query_arg('fb_dir', crumb.path)|esc_url }}">{{ crumb.label|e }}</a>
+        {% endfor %}
+    </div>
+
+    <!-- Liste -->
+    <ul class="WPFN-list">
+        {% for item in items %}
+            <li class="WPFN-item {{ item.isDir ? 'is-dir' : 'is-file' }}" 
+                data-path="{{ item.relative|e }}" 
+                data-is-dir="{{ item.isDir ? 'true' : 'false' }}">
+                
+                <input type="checkbox" class="WPFN-item-checkbox" data-path="{{ item.relative|e }}">
+                
+                {% if item.isDir %}
+                    {# Dossier : lien cliquable #}
+                    <a href="{{ add_query_arg('fb_dir', item.relative)|esc_url }}" class="WPFN-item-link">
+                        <span class="WPFN-item-icon">📁</span>
+                        <span class="WPFN-item-name">{{ item.name|e }}</span>
+                    </a>
+                {% else %}
+                    {# Fichier #}
+                    {% set ext = item.name|split('.')|last|lower %}
+                    {% set file_url = item.relative|WPFN_file_url(root_path) %}
+                    
+                    <span class="WPFN-item-content">
+                        {% if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                            <span class="WPFN-thumbnail-wrapper">
+                                <img src="{{ file_url }}" alt="{{ item.name }}" class="WPFN-thumbnail">
+                                <span class="WPFN-thumbnail-zoom">
+                                    <img src="{{ file_url }}" alt="Aperçu">
+                                </span>
+                            </span>
+                        {% elseif ext == 'pdf' %}
+                            <span class="WPFN-item-icon WPFN-pdf-icon">📑</span>
+                        {% else %}
+                            <span class="WPFN-item-icon">📄</span>
+                        {% endif %}
+                        <span class="WPFN-item-name">{{ item.name|e }}</span>
+                    </span>
+                    <span class="WPFN-item-size">({{ item.size|size_format }})</span>
+                    <span class="WPFN-item-date">{{ date_i18n('d/m/Y H:i', item.mtime) }}</span>
+                {% endif %}
+                
+                <!-- Renommage -->
+                <span class="WPFN-rename-wrapper" style="display:none;">
+                    <input type="text" class="WPFN-rename-input" value="{{ item.name|e }}">
+                    <button class="WPFN-rename-confirm">✅</button>
+                    <button class="WPFN-rename-cancel">❌</button>
+                </span>
+            </li>
+        {% else %}
+            <li class="WPFN-empty">Aucun fichier ou dossier trouvé.</li>
+        {% endfor %}
+    </ul>
+</div>

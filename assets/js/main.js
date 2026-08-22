@@ -3,9 +3,9 @@
 
     const plugin = {
         init: function() {
-            this.container = $('.wpfb-filebrowser');
+            this.container = $('.WPFN-filenavigator');
             if (!this.container.length) {
-                console.warn('WP FileBrowser: conteneur non trouvé.');
+                console.warn('File Navigator: conteneur non trouvé.');
                 return;
             }
 
@@ -14,10 +14,10 @@
             this.ajaxurl = this.container.data('ajaxurl');
             this.nonce = this.container.data('nonce');
 
-            console.log('WP FileBrowser initialisé avec root:', this.root);
+            console.log('File Navigator initialisé avec root:', this.root);
 
-            this.status = $('#wpfb-status');
-            this.clipboardIndicator = $('#wpfb-clipboard-indicator');
+            this.status = $('#WPFN-status');
+            this.clipboardIndicator = $('#WPFN-clipboard-indicator');
             this.currentDir = this.getCurrentDir();
 
             this.bindEvents();
@@ -45,7 +45,7 @@
         // Lecture du presse-papiers dans localStorage
         getClipboard: function() {
             try {
-                return JSON.parse(localStorage.getItem('wpfb_clipboard'));
+                return JSON.parse(localStorage.getItem('WPFN_clipboard'));
             } catch(e) {
                 return null;
             }
@@ -54,9 +54,9 @@
         // Écriture dans le presse-papiers
         setClipboard: function(paths, mode) {
             if (!paths || paths.length === 0) {
-                localStorage.removeItem('wpfb_clipboard');
+                localStorage.removeItem('WPFN_clipboard');
             } else {
-                localStorage.setItem('wpfb_clipboard', JSON.stringify({
+                localStorage.setItem('WPFN_clipboard', JSON.stringify({
                     paths: paths,
                     mode: mode,
                     sourceDir: this.currentDir
@@ -67,7 +67,7 @@
 
         // Récupère les chemins sélectionnés
         getSelectedPaths: function() {
-            return this.container.find('.wpfb-item-checkbox:checked').map(function() {
+            return this.container.find('.WPFN-item-checkbox:checked').map(function() {
                 return $(this).data('path');
             }).get();
         },
@@ -107,11 +107,11 @@
             const self = this;
 
             // ---------- UPLOAD ----------
-            $('.wpfb-btn-upload').on('click', function() {
-                $('#wpfb-upload-input').click();
+            $('.WPFN-btn-upload').on('click', function() {
+                $('#WPFN-upload-input').click();
             });
 
-            $('#wpfb-upload-input').on('change', function() {
+            $('#WPFN-upload-input').on('change', function() {
                 const files = this.files;
                 if (files.length === 0) return;
 
@@ -121,7 +121,7 @@
                 for (let i = 0; i < files.length; i++) {
                     formData.append('files[]', files[i]);
                 }
-                formData.append('action', 'wpfb_upload');
+                formData.append('action', 'WPFN_upload');
                 formData.append('nonce', self.nonce);
                 formData.append('root', self.root);
                 formData.append('current_dir', self.currentDir);
@@ -150,14 +150,14 @@
             });
 
             // ---------- TÉLÉCHARGER (DL) ----------
-            $('.wpfb-btn-download').on('click', function() {
+            $('.WPFN-btn-download').on('click', function() {
                 const selected = self.getSelectedPaths();
                 if (selected.length === 0) {
                     self.setStatus('Sélectionnez au moins un élément.', true);
                     return;
                 }
                 const url = self.ajaxurl +
-                    '?action=wpfb_download' +
+                    '?action=WPFN_download' +
                     '&paths=' + encodeURIComponent(JSON.stringify(selected)) +
                     '&nonce=' + self.nonce +
                     '&root=' + encodeURIComponent(self.root);
@@ -166,7 +166,7 @@
             });
 
             // ---------- COPIER ----------
-            $('.wpfb-btn-copy').on('click', function() {
+            $('.WPFN-btn-copy').on('click', function() {
                 const selected = self.getSelectedPaths();
                 if (selected.length === 0) {
                     self.setStatus('Sélectionnez au moins un élément.', true);
@@ -177,7 +177,7 @@
             });
 
             // ---------- COUPER ----------
-            $('.wpfb-btn-cut').on('click', function() {
+            $('.WPFN-btn-cut').on('click', function() {
                 const selected = self.getSelectedPaths();
                 if (selected.length === 0) {
                     self.setStatus('Sélectionnez au moins un élément.', true);
@@ -188,7 +188,7 @@
             });
 
             // ---------- COLLER ----------
-            $('.wpfb-btn-paste').on('click', function() {
+            $('.WPFN-btn-paste').on('click', function() {
                 const clipboard = self.getClipboard();
                 if (!clipboard || !clipboard.paths || clipboard.paths.length === 0) {
                     self.setStatus('Presse-papiers vide.', true);
@@ -203,7 +203,7 @@
                     target_dir: self.currentDir || '.'
                 };
 
-                self.ajax('wpfb_paste', data, function(response) {
+                self.ajax('WPFN_paste', data, function(response) {
                     self.setStatus(`Collage terminé (${clipboard.mode === 'copy' ? 'copie' : 'déplacement'}).`);
                     if (clipboard.mode === 'cut') {
                         self.setClipboard([], 'copy');
@@ -213,7 +213,7 @@
             });
 
             // ---------- SUPPRIMER ----------
-            $('.wpfb-btn-delete').on('click', function() {
+            $('.WPFN-btn-delete').on('click', function() {
                 const selected = self.getSelectedPaths();
                 if (selected.length === 0) {
                     self.setStatus('Sélectionnez au moins un élément.', true);
@@ -221,16 +221,16 @@
                 }
                 if (!confirm(`Supprimer définitivement ${selected.length} élément(s) ?`)) return;
 
-                self.ajax('wpfb_delete', { paths: JSON.stringify(selected) }, function() {
+                self.ajax('WPFN_delete', { paths: JSON.stringify(selected) }, function() {
                     self.setStatus('Suppression réussie.');
                     location.reload();
                 });
             });
             
             // ---------- TRI ----------
-            $('.wpfb-sort-select, .wpfb-order-select').on('change', function() {
-                const sort = $('#wpfb-sort-select').val();
-                const order = $('#wpfb-order-select').val();
+            $('.WPFN-sort-select, .WPFN-order-select').on('change', function() {
+                const sort = $('#WPFN-sort-select').val();
+                const order = $('#WPFN-order-select').val();
                 const currentUrl = new URL(window.location.href);
                 currentUrl.searchParams.set('sort', sort);
                 currentUrl.searchParams.set('order', order);
@@ -238,7 +238,7 @@
             });
             
             // ---------- NOUVEAU DOSSIER ----------
-            $('.wpfb-btn-mkdir').on('click', function() {
+            $('.WPFN-btn-mkdir').on('click', function() {
                 const dirName = prompt('Nom du nouveau dossier :');
                 if (dirName === null) return; // annulé
                 const name = dirName.trim();
@@ -246,7 +246,7 @@
                     self.setStatus('Le nom ne peut pas être vide.', true);
                     return;
                 }
-                self.ajax('wpfb_mkdir', {
+                self.ajax('WPFN_mkdir', {
                     new_dir: name,
                     current_dir: self.currentDir || '.'
                 }, function(response) {
@@ -256,17 +256,17 @@
             });
 
             // ---------- RENOMMER ----------
-            $('.wpfb-btn-rename').on('click', function() {
+            $('.WPFN-btn-rename').on('click', function() {
                 const selected = self.getSelectedPaths();
                 if (selected.length !== 1) {
                     self.setStatus('Sélectionnez un seul élément pour le renommer.', true);
                     return;
                 }
 
-                const $item = self.container.find('.wpfb-item-checkbox:checked').closest('.wpfb-item');
-                const $name = $item.find('.wpfb-item-name');
-                const $wrapper = $item.find('.wpfb-rename-wrapper');
-                const $input = $wrapper.find('.wpfb-rename-input');
+                const $item = self.container.find('.WPFN-item-checkbox:checked').closest('.WPFN-item');
+                const $name = $item.find('.WPFN-item-name');
+                const $wrapper = $item.find('.WPFN-rename-wrapper');
+                const $input = $wrapper.find('.WPFN-rename-input');
 
                 $name.hide();
                 $wrapper.show();
@@ -274,10 +274,10 @@
             });
 
             // Confirmation de renommage
-            $(document).on('click', '.wpfb-rename-confirm', function() {
-                const $item = $(this).closest('.wpfb-item');
+            $(document).on('click', '.WPFN-rename-confirm', function() {
+                const $item = $(this).closest('.WPFN-item');
                 const oldPath = $item.data('path');
-                const $input = $item.find('.wpfb-rename-input');
+                const $input = $item.find('.WPFN-rename-input');
                 const newName = $input.val().trim();
 
                 if (!newName) {
@@ -285,7 +285,7 @@
                     return;
                 }
 
-                self.ajax('wpfb_rename', {
+                self.ajax('WPFN_rename', {
                     old_path: oldPath,
                     new_name: newName
                 }, function() {
@@ -295,10 +295,10 @@
             });
 
             // Annulation du renommage
-            $(document).on('click', '.wpfb-rename-cancel', function() {
-                const $item = $(this).closest('.wpfb-item');
-                $item.find('.wpfb-rename-wrapper').hide();
-                $item.find('.wpfb-item-name').show();
+            $(document).on('click', '.WPFN-rename-cancel', function() {
+                const $item = $(this).closest('.WPFN-item');
+                $item.find('.WPFN-rename-wrapper').hide();
+                $item.find('.WPFN-item-name').show();
             });
         }
     };

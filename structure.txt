@@ -1,15 +1,15 @@
-wp-filebrowser/
-├── wp-filebrowser.php               # fichier principal du plugin
+wp-filenavigator/
+├── wp-filenavigator.php               # fichier principal du plugin
 ├── composer.json                    # gestion des dépendances Symfony
 ├── vendor/                          # (généré par Composer)
 ├── src/
-│   ├── FileBrowser/
-│   │   ├── FileBrowserService.php   # service utilisant Finder
+│   ├── FileNavigator/
+│   │   ├── FileNavigatorService.php   # service utilisant Finder
 │   │   └── SecurityChecker.php      # vérification des chemins
 │   └── Shortcode/
-│       └── FileBrowserShortcode.php # gestion de la shortcode
+│       └── FileNavigatorShortcode.php # gestion de la shortcode
 ├── templates/
-│   └── filebrowser.php              # template d'affichage (PHP)
+│   └── filenavigator.php              # template d'affichage (PHP)
 └── assets/
     ├── css/
     │   └── style.css                # styles de base

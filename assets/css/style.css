@@ -1,17 +1,17 @@
 /* ========================================
-   WP FileBrowser – Styles complets
+   File Navigator – Styles complets
    ======================================== */
 
 /* --- Conteneur principal --- */
-.wpfb-filebrowser {
+.WPFN-filenavigator {
     max-width: 100%;
     box-sizing: border-box;
     overflow: auto;
-    height: var(--wpfb-height, auto) !important; /* géré par le style inline */
+    height: var(--WPFN-height, auto) !important; /* géré par le style inline */
 }
 
 /* --- Barre d'outils (sticky) --- */
-.wpfb-toolbar {
+.WPFN-toolbar {
     position: sticky;
     top: 0;
     z-index: 10;
@@ -26,7 +26,7 @@
 }
 
 /* --- Boutons de la barre d'outils --- */
-.wpfb-toolbar .wpfb-btn {
+.WPFN-toolbar .WPFN-btn {
     display: inline-flex;
     align-items: center;
     gap: 4px;                     /* espace entre l'icône et le texte */
@@ -40,63 +40,63 @@
     transition: background 0.2s;
     white-space: nowrap;
 }
-.wpfb-toolbar .wpfb-btn:hover {
+.WPFN-toolbar .WPFN-btn:hover {
     background: #e9e9e9;
 }
-.wpfb-toolbar .wpfb-btn:active {
+.WPFN-toolbar .WPFN-btn:active {
     background: #d5d5d5;
 }
 
 /* --- Statut et indicateur de presse-papiers --- */
-.wpfb-status {
+.WPFN-status {
     margin-left: 10px;
     font-weight: bold;
     flex: 1;
 }
-#wpfb-clipboard-indicator {
+#WPFN-clipboard-indicator {
     margin-left: 10px;
     color: #0073aa;
 }
 
 /* --- Fil d'Ariane (breadcrumb) --- */
-.wpfb-breadcrumb {
+.WPFN-breadcrumb {
     padding: 10px;
     background: #f5f5f5;
     border-radius: 4px;
     margin-bottom: 15px;
 }
-.wpfb-breadcrumb a {
+.WPFN-breadcrumb a {
     text-decoration: none;
     color: #0073aa;
 }
 
 /* --- Liste des fichiers --- */
-.wpfb-list {
+.WPFN-list {
     list-style: none;
     padding: 0;
     margin: 0;
 }
 
 /* --- Élément de la liste --- */
-.wpfb-item {
+.WPFN-item {
     display: flex;
     align-items: center;
     gap: 8px;
     padding: 5px 0;
     border-bottom: 1px solid #eee;
 }
-.wpfb-item.is-dir a {
+.WPFN-item.is-dir a {
     font-weight: bold;
     color: #2c3e50;
 }
-.wpfb-item-checkbox {
+.WPFN-item-checkbox {
     margin-right: 5px;
     flex-shrink: 0;
 }
 
 /* --- Contenu des fichiers (icône + nom) --- */
-.wpfb-item-content,
-.wpfb-item-link {
+.WPFN-item-content,
+.WPFN-item-link {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -104,13 +104,13 @@
 }
 
 /* --- Icônes génériques --- */
-.wpfb-item-icon {
+.WPFN-item-icon {
     font-size: 20px;
     line-height: 1;
     flex-shrink: 0;
     margin-right: 5px;
 }
-.wpfb-pdf-icon {
+.WPFN-pdf-icon {
     font-size: 24px;
     line-height: 1;
     flex-shrink: 0;
@@ -118,19 +118,19 @@
 }
 
 /* --- Nom du fichier --- */
-.wpfb-item-name {
+.WPFN-item-name {
     font-weight: normal;
     font-size: 0.9em;
     line-height: 1.4;
     word-break: break-word;
 }
-.wpfb-item.is-dir .wpfb-item-name {
+.WPFN-item.is-dir .WPFN-item-name {
     font-weight: bold;
 }
 
 /* --- Taille et date --- */
-.wpfb-item-size,
-.wpfb-item-date {
+.WPFN-item-size,
+.WPFN-item-date {
     color: #888;
     font-size: 0.8em;
     margin-left: 5px;
@@ -138,14 +138,14 @@
 }
 
 /* --- Miniature d'image --- */
-.wpfb-thumbnail-wrapper {
+.WPFN-thumbnail-wrapper {
     position: relative;
     display: inline-block;
     cursor: pointer;
     flex-shrink: 0;
     line-height: 1;
 }
-.wpfb-thumbnail {
+.WPFN-thumbnail {
     width: 24px;
     height: 24px;
     object-fit: cover;
@@ -157,7 +157,7 @@
 }
 
 /* --- Zoom au survol --- */
-.wpfb-thumbnail-zoom {
+.WPFN-thumbnail-zoom {
     position: absolute;
     top: 0;
     left: calc(100% + 10px);
@@ -172,10 +172,10 @@
     max-width: 300px;
     max-height: 300px;
 }
-.wpfb-thumbnail-wrapper:hover .wpfb-thumbnail-zoom {
+.WPFN-thumbnail-wrapper:hover .WPFN-thumbnail-zoom {
     display: block;
 }
-.wpfb-thumbnail-zoom img {
+.WPFN-thumbnail-zoom img {
     display: block;
     max-width: 100%;
     max-height: 280px;
@@ -185,19 +185,19 @@
 }
 
 /* --- Zone de renommage --- */
-.wpfb-rename-wrapper {
+.WPFN-rename-wrapper {
     display: inline-flex;
     gap: 5px;
     align-items: center;
 }
-.wpfb-rename-input {
+.WPFN-rename-input {
     border: 1px solid #ccc;
     border-radius: 3px;
     padding: 2px 6px;
     font-size: 0.9em;
 }
-.wpfb-rename-confirm,
-.wpfb-rename-cancel {
+.WPFN-rename-confirm,
+.WPFN-rename-cancel {
     background: none;
     border: none;
     cursor: pointer;
@@ -206,19 +206,19 @@
 }
 
 /* --- Message "vide" --- */
-.wpfb-empty {
+.WPFN-empty {
     color: #999;
     font-style: italic;
     padding: 10px 0;
 }
-.wpfb-sort-group {
+.WPFN-sort-group {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     margin-left: 10px;
     font-size: 13px;
 }
-.wpfb-sort-group select {
+.WPFN-sort-group select {
     padding: 3px 6px;
     border-radius: 3px;
     border: 1px solid #ccc;

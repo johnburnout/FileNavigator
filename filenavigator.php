@@ -1,11 +1,13 @@
 <?php
 /**
- * Plugin Name: WP FileBrowser
- * Description: Navigateur de fichiers avec shortcode, Symfony Finder, Twig et barre d'outils (upload, download, copier, couper, coller, supprimer, renommer).
- * Version: 1.1.0
- * Author: Jean Roussie
- * Icon: assets/img/icon.svg
- */
+* Plugin Name: File Navigator
+* Description: Navigateur de fichiers avec shortcode, Symfony Finder, Twig et barre d'outils (upload, download, copier, couper, coller, supprimer, renommer, créer dossier, tri dynamique).
+* Version: 1.1.0
+* Author: Jean Roussie
+* Icon: assets/img/icon.svg
+* Text Domain: filenavigator
+* Domain Path: /languages
+*/
 
 if (!defined('ABSPATH')) {
     exit;
@@ -13,33 +15,33 @@ if (!defined('ABSPATH')) {
 
 require_once __DIR__ . '/vendor/autoload.php';
 
-define('WPFB_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('WPFB_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('WPFN_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('WPFN_PLUGIN_URL', plugin_dir_url(__FILE__));
 
 add_action('init', function() {
-    add_shortcode('filebrowser', ['WPFB\Shortcode\FileBrowserShortcode', 'render']);
+    add_shortcode('filenavigator', ['WPFN\Shortcode\FileNavigatorShortcode', 'render']);
 });
 
 add_action('wp_enqueue_scripts', function() {
-    wp_enqueue_style('wpfb-style', WPFB_PLUGIN_URL . 'assets/css/style.css');
-    wp_enqueue_script('wpfb-script', WPFB_PLUGIN_URL . 'assets/js/main.js', ['jquery'], '1.1', true);
+    wp_enqueue_style('WPFN-style', WPFN_PLUGIN_URL . 'assets/css/style.css');
+    wp_enqueue_script('WPFN-script', WPFN_PLUGIN_URL . 'assets/js/main.js', ['jquery'], '1.1', true);
 });
 
 // ================================
 // AJAX endpoints
 // ================================
 
-add_action('wp_ajax_wpfb_upload', 'wpfb_ajax_upload');
-add_action('wp_ajax_wpfb_download', 'wpfb_ajax_download'); // on garde wp_ajax_nopriv aussi pour non connectés
-add_action('wp_ajax_nopriv_wpfb_download', 'wpfb_ajax_download'); // autoriser les non connectés
-add_action('wp_ajax_wpfb_delete', 'wpfb_ajax_delete');
-add_action('wp_ajax_wpfb_rename', 'wpfb_ajax_rename');
-add_action('wp_ajax_wpfb_paste', 'wpfb_ajax_paste');
-add_action('wp_ajax_wpfb_mkdir', 'wpfb_ajax_mkdir');
+add_action('wp_ajax_WPFN_upload', 'WPFN_ajax_upload');
+add_action('wp_ajax_WPFN_download', 'WPFN_ajax_download'); // on garde wp_ajax_nopriv aussi pour non connectés
+add_action('wp_ajax_nopriv_WPFN_download', 'WPFN_ajax_download'); // autoriser les non connectés
+add_action('wp_ajax_WPFN_delete', 'WPFN_ajax_delete');
+add_action('wp_ajax_WPFN_rename', 'WPFN_ajax_rename');
+add_action('wp_ajax_WPFN_paste', 'WPFN_ajax_paste');
+add_action('wp_ajax_WPFN_mkdir', 'WPFN_ajax_mkdir');
 
 // ---------- UPLOAD ----------
-function wpfb_ajax_upload() {
-    check_ajax_referer('wpfb_ajax_nonce', 'nonce');
+function WPFN_ajax_upload() {
+    check_ajax_referer('WPFN_ajax_nonce', 'nonce');
     if (!current_user_can('upload_files')) {
         wp_send_json_error(['message' => 'Permission refusée.']);
     }
@@ -52,7 +54,7 @@ function wpfb_ajax_upload() {
     $currentDir = isset($_POST['current_dir']) ? sanitize_text_field($_POST['current_dir']) : '';
 
     try {
-        $service = new \WPFB\FileBrowser\FileOperationService($root);
+        $service = new \WPFN\FileNavigator\FileOperationService($root);
         $uploaded = $service->upload($_FILES['files'], $currentDir);
         wp_send_json_success(['files' => $uploaded]);
     } catch (\Exception $e) {
@@ -61,7 +63,7 @@ function wpfb_ajax_upload() {
 }
 
 // ---------- DOWNLOAD (public) ----------
-function wpfb_ajax_download() {
+function WPFN_ajax_download() {
     // Pas de vérification de capacité pour autoriser tout le monde
     $paths = isset($_GET['paths']) ? json_decode(stripslashes($_GET['paths']), true) : [];
     if (empty($paths)) {
@@ -74,7 +76,7 @@ function wpfb_ajax_download() {
         $root = $upload_dir['basedir'];
     }
 
-    $service = new \WPFB\FileBrowser\FileOperationService($root);
+    $service = new \WPFN\FileNavigator\FileOperationService($root);
     try {
         $service->download($paths);
     } catch (\Exception $e) {
@@ -83,8 +85,8 @@ function wpfb_ajax_download() {
 }
 
 // ---------- DELETE ----------
-function wpfb_ajax_delete() {
-    check_ajax_referer('wpfb_ajax_nonce', 'nonce');
+function WPFN_ajax_delete() {
+    check_ajax_referer('WPFN_ajax_nonce', 'nonce');
     if (!current_user_can('delete_posts')) {
         wp_send_json_error(['message' => 'Permission refusée.']);
     }
@@ -100,7 +102,7 @@ function wpfb_ajax_delete() {
         $root = $upload_dir['basedir'];
     }
 
-    $service = new \WPFB\FileBrowser\FileOperationService($root);
+    $service = new \WPFN\FileNavigator\FileOperationService($root);
     try {
         $service->delete($paths);
         wp_send_json_success();
@@ -110,8 +112,8 @@ function wpfb_ajax_delete() {
 }
 
 // ---------- RENAME ----------
-function wpfb_ajax_rename() {
-    check_ajax_referer('wpfb_ajax_nonce', 'nonce');
+function WPFN_ajax_rename() {
+    check_ajax_referer('WPFN_ajax_nonce', 'nonce');
     if (!current_user_can('edit_posts')) {
         wp_send_json_error(['message' => 'Permission refusée.']);
     }
@@ -128,7 +130,7 @@ function wpfb_ajax_rename() {
         $root = $upload_dir['basedir'];
     }
 
-    $service = new \WPFB\FileBrowser\FileOperationService($root);
+    $service = new \WPFN\FileNavigator\FileOperationService($root);
     try {
         $service->rename($old, $newName);
         wp_send_json_success();
@@ -138,8 +140,8 @@ function wpfb_ajax_rename() {
 }
 
 // ---------- PASTE ----------
-function wpfb_ajax_paste() {
-    check_ajax_referer('wpfb_ajax_nonce', 'nonce');
+function WPFN_ajax_paste() {
+    check_ajax_referer('WPFN_ajax_nonce', 'nonce');
     if (!current_user_can('edit_posts')) {
         wp_send_json_error(['message' => 'Permission refusée.']);
     }
@@ -158,7 +160,7 @@ function wpfb_ajax_paste() {
         $root = $upload_dir['basedir'];
     }
 
-    $service = new \WPFB\FileBrowser\FileOperationService($root);
+    $service = new \WPFN\FileNavigator\FileOperationService($root);
     try {
         $service->paste($paths, $sourceDir, $targetDir, $mode);
         wp_send_json_success();
@@ -168,8 +170,8 @@ function wpfb_ajax_paste() {
 }
 
 // ---------- MKDIR ----------
-function wpfb_ajax_mkdir() {
-    check_ajax_referer('wpfb_ajax_nonce', 'nonce');
+function WPFN_ajax_mkdir() {
+    check_ajax_referer('WPFN_ajax_nonce', 'nonce');
     if (!current_user_can('edit_posts')) {
         wp_send_json_error(['message' => 'Permission refusée.']);
     }
@@ -187,7 +189,7 @@ function wpfb_ajax_mkdir() {
     }
 
     try {
-        $service = new \WPFB\FileBrowser\FileOperationService($root);
+        $service = new \WPFN\FileNavigator\FileOperationService($root);
         $service->createDirectory($newDir, $currentDir);
         wp_send_json_success(['message' => 'Dossier créé avec succès.']);
     } catch (\Exception $e) {

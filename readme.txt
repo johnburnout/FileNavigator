@@ -1,4 +1,4 @@
-=== WP FileBrowser ===
+=== File Navigator ===
 Contributors: johnburnout
 Tags: file manager, file browser, upload, download, symfony, twig, files, media
 Requires at least: 5.8
@@ -12,7 +12,7 @@ Un navigateur de fichiers pour WordPress, propulsé par Symfony Finder et Twig. 
 
 == Description ==
 
-**WP FileBrowser** est un navigateur de fichiers intégré à WordPress, accessible via une shortcode `[filebrowser]`. Il permet de gérer les fichiers du serveur directement depuis votre site.
+**File Navigator** est un navigateur de fichiers intégré à WordPress, accessible via une shortcode `[filenavigator]`. Il permet de gérer les fichiers du serveur directement depuis votre site.
 
 ### Fonctionnalités
 
@@ -45,19 +45,19 @@ Un navigateur de fichiers pour WordPress, propulsé par Symfony Finder et Twig. 
 
 ### Exemples d'utilisation
 
-`[filebrowser]`
+`[filenavigator]`
 
 Navigateur dans le dossier `uploads`, largeur 100%, hauteur 400px.
 
-`[filebrowser root="downloads" width="800px" height="600px" extensions="jpg,png,pdf"]`
+`[filenavigator root="downloads" width="800px" height="600px" extensions="jpg,png,pdf"]`
 
 Explorer le dossier `uploads/downloads`, afficher uniquement JPG, PNG et PDF.
 
-`[filebrowser root="/home/site/public_html/documents" sort="mtime" order="desc"]`
+`[filenavigator root="/home/site/public_html/documents" sort="mtime" order="desc"]`
 
 Dossier absolu, tri par date de modification du plus récent au plus ancien.
 
-`[filebrowser public_download="false"]`
+`[filenavigator public_download="false"]`
 
 Téléchargement uniquement autorisé aux utilisateurs connectés.
 
@@ -66,17 +66,17 @@ Téléchargement uniquement autorisé aux utilisateurs connectés.
 1. Téléchargez l'archive ZIP.
 2. Allez dans **Extensions → Ajouter → Téléverser une extension**.
 3. Sélectionnez le fichier ZIP et cliquez sur **Installer maintenant**.
-4. Activez l'extension **"WP FileBrowser"**.
-5. Insérez la shortcode `[filebrowser]` dans n'importe quelle page ou article.
+4. Activez l'extension **"File Navigator"**.
+5. Insérez la shortcode `[filenavigator]` dans n'importe quelle page ou article.
 
 == FAQ ==
 
 **Comment personnaliser les permissions ?**
 
-Utilisez le filtre `wpfb_permissions` dans votre `functions.php` :
+Utilisez le filtre `WPFN_permissions` dans votre `functions.php` :
 
 ```php
-add_filter('wpfb_permissions', function($perms) {
+add_filter('WPFN_permissions', function($perms) {
     $perms['can_delete'] = current_user_can('manage_options');
     return $perms;
 });
@@ -84,7 +84,7 @@ add_filter('wpfb_permissions', function($perms) {
 
 **Comment changer le format de la date ?**
 
-Modifiez le template `filebrowser.twig` et remplacez `'d/m/Y H:i'` par le format souhaité.
+Modifiez le template `filenavigator.twig` et remplacez `'d/m/Y H:i'` par le format souhaité.
 
 **Le téléchargement ne fonctionne pas ?**
 
@@ -109,7 +109,7 @@ Dans le dossier `wp-content/uploads/` ou dans le sous‑dossier spécifié par `
 * Aperçu des images au survol avec zoom
 * Icônes spécifiques pour les PDF
 * Gestion des permissions par rôle WordPress
-* Filtre `wpfb_permissions` pour personnalisation
+* Filtre `WPFN_permissions` pour personnalisation
 * Correction de la détection des dossiers (`is_dir`)
 * Liens cliquables pour les dossiers
 * Tri dynamique par nom, taille et date
@@ -130,6 +130,6 @@ Mise à jour majeure avec tri dynamique, aperçu des images, barre d'outils fixe
 
 Le plugin est open‑source. Les contributions sont les bienvenues sur GitHub :
 
-[https://github.com/johnburnout/WP-FileBrowser](https://github.com/johnburnout/WP-FileBrowser)
+[https://github.com/johnburnout/WP-FileNavigator](https://github.com/johnburnout/WP-FileNavigator)
 
-Merci d'utiliser WP FileBrowser ! 🚀
+Merci d'utiliser File Navigator ! 🚀
