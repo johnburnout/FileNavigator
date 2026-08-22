@@ -1,66 +1,67 @@
 === File Navigator ===
-Name: File Navigator
-Contributors: pifgadget
-Tags: file manager, file browser, upload, download, files
+Contributors: johnburnout
+Tags: file manager, file browser, upload, download, symfony
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
 Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-
-Un navigateur de fichiers pour WordPress, propulsé par Symfony Finder et Twig. Upload, download, copier, coller, supprimer, renommer, créer des dossiers, aperçu des images.
+Tested up to: 7.1
+A powerful file manager for WordPress, powered by Symfony Finder and Twig.
 
 == Description ==
 
-**File Navigator** est un navigateur de fichiers intégré à WordPress, accessible via une shortcode `[filenavigator]`. Il permet de gérer les fichiers du serveur directement depuis votre site.
+**File Navigator** is a powerful file manager for WordPress, accessible via the `[filenavigator]` shortcode. It allows you to manage server files directly from your site.
 
-### Fonctionnalités
+### Features
 
-* 📂 Navigation dans les dossiers (arborescence cliquable)
-* 🖼️ Aperçu des images (miniature avec zoom au survol)
-* 📑 Icônes spécifiques pour les PDF
-* 📤 Upload de fichiers
-* ⬇️ Téléchargement d'un fichier ou d'un ZIP multiple
-* 📋 Copier / Couper / Coller (presse‑papiers avec localStorage)
-* ✏️ Renommer un fichier ou un dossier
-* 🗑️ Supprimer des fichiers ou dossiers
-* 📁 Créer un nouveau dossier
-* 🔒 Gestion des permissions par rôle WordPress
-* 📱 Responsive et paramétrable (largeur/hauteur fixe)
-* ⚡ AJAX pour toutes les actions
-* 🔍 Tri dynamique par nom, taille, date
+* 📂 Folder navigation (clickable tree structure)
+* 🖼️ Image preview (thumbnail with hover zoom)
+* 📑 PDF-specific icons
+* 📤 File upload
+* ⬇️ Single or batch (ZIP) file download
+* 📋 Copy / Cut / Paste (localStorage clipboard)
+* ✏️ Rename files and folders
+* 🗑️ Delete files and folders
+* 📁 Create new folders
+* 🔒 Role-based permission management (WordPress capabilities)
+* 🔍 Dynamic sorting (name, size, date) with dropdown menus
+* 📅 Date display format: **DD/MM/YYYY HH:MM**
+* 📱 Responsive and customizable (fixed width/height)
+* ⚡ All actions via AJAX (no page reload)
 
-### Paramètres de la shortcode
+### Shortcode Parameters
 
-| Paramètre | Description | Valeurs possibles | Défaut |
-|-----------|-------------|-------------------|--------|
-| `root` | Dossier à explorer (relatif à `wp-content/uploads` ou absolu) | `downloads`, `/chemin/absolu` | uploads |
-| `extensions` | Extensions autorisées | `jpg,png,pdf` | (toutes) |
-| `sort` | Critère de tri | `name`, `size`, `mtime` | `name` |
-| `order` | Ordre de tri | `asc`, `desc` | `asc` |
-| `show_hidden` | Afficher les fichiers cachés | `true`, `false` | `false` |
-| `width` | Largeur du navigateur | `100%`, `800px` | `100%` |
-| `height` | Hauteur du navigateur | `500px`, `80vh` | `400px` |
-| `public_download` | Téléchargement public | `true`, `false` | `true` |
+| Parameter | Description | Possible values | Default |
+|-----------|-------------|-----------------|---------|
+| `root` | Directory to browse (relative to `wp-content/uploads` or absolute path) | `downloads`, `/absolute/path` | uploads |
+| `extensions` | Allowed file extensions (comma-separated) | `jpg,png,pdf` | (all) |
+| `sort` | Sorting criteria | `name`, `size`, `mtime` | `name` |
+| `order` | Sort order | `asc`, `desc` | `asc` |
+| `show_hidden` | Show hidden files | `true`, `false` | `false` |
+| `width` | Browser width (CSS value) | `100%`, `800px` | `100%` |
+| `height` | Browser height (scrollbars) | `500px`, `80vh` | `400px` |
+| `public_download` | Allow downloads for non-logged-in users | `true`, `false` | `true` |
 
-### Exemples d'utilisation
+### Usage Examples
 
 `[filenavigator]`
 
-Navigateur dans le dossier `uploads`, largeur 100%, hauteur 400px.
+Browse the `uploads` folder, 100% width, 400px height.  
+Date displayed as `DD/MM/YYYY HH:MM`.
 
 `[filenavigator root="downloads" width="800px" height="600px" extensions="jpg,png,pdf"]`
 
-Explorer le dossier `uploads/downloads`, afficher uniquement JPG, PNG et PDF.
+Browse `uploads/downloads`, show only JPG, PNG, and PDF files.
 
 `[filenavigator root="/home/site/public_html/documents" sort="mtime" order="desc"]`
 
-Dossier absolu, tri par date de modification du plus récent au plus ancien.
+Absolute path, sort by modification date (newest first).
 
 `[filenavigator public_download="false"]`
 
-Téléchargement uniquement autorisé aux utilisateurs connectés.
+Downloads restricted to logged-in users only.
 
 == Installation ==
 
