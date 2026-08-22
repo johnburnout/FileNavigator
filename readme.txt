@@ -1,6 +1,7 @@
 === File Navigator ===
-Contributors: johnburnout
-Tags: file manager, file browser, upload, download, symfony, twig, files, media
+Name: File Navigator
+Contributors: pifgadget
+Tags: file manager, file browser, upload, download, files
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
