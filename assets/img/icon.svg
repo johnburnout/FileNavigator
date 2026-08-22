@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#F8F9FB"/>
+    <stop offset="1" stop-color="#EEF1F5"/>
+  </linearGradient>
+  <linearGradient id="folderBack" x1="0" y1="0" x2="0" y2="1">
+    <stop stop-color="#2871B8"/><stop offset="1" stop-color="#0D3768"/>
+  </linearGradient>
+  <linearGradient id="folder" x1="0" y1="0" x2="0.85" y2="1">
+    <stop stop-color="#55A4E4"/><stop offset=".48" stop-color="#1E6FB2"/><stop offset="1" stop-color="#0A3C71"/>
+  </linearGradient>
+  <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+    <stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#DCE3EC"/>
+  </linearGradient>
+  <linearGradient id="imageFile" x1="0" y1="0" x2="1" y2="1">
+    <stop stop-color="#7CC4F2"/><stop offset="1" stop-color="#2473AF"/>
+  </linearGradient>
+  <linearGradient id="yellow" x1="0" y1="0" x2="0" y2="1">
+    <stop stop-color="#FFD86A"/><stop offset="1" stop-color="#F2A900"/>
+  </linearGradient>
+  <radialGradient id="lens" cx=".38" cy=".3" r=".8">
+    <stop stop-color="#D9EEFF"/><stop offset=".45" stop-color="#8AB7E4"/><stop offset="1" stop-color="#376C9D"/>
+  </radialGradient>
+  <linearGradient id="handle" x1="0" y1="0" x2="1" y2="1">
+    <stop stop-color="#4A4E54"/><stop offset=".55" stop-color="#1D2025"/><stop offset="1" stop-color="#080A0D"/>
+  </linearGradient>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+    <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#00172A" flood-opacity=".28"/>
+  </filter>
+  <filter id="smallShadow" x="-30%" y="-30%" width="160%" height="170%">
+    <feDropShadow dx="0" dy="7" stdDeviation="7" flood-color="#00172A" flood-opacity=".22"/>
+  </filter>
+</defs>
+
+<!-- background -->
+<rect width="1024" height="1024" rx="96" fill="url(#bg)"/>
+
+<!-- overall icon -->
+<g filter="url(#shadow)">
+  <!-- rear folder -->
+  <path d="M79 206c0-36 29-65 65-65h112l56 53h498c36 0 65 29 65 65v390c0 36-29 65-65 65H144c-36 0-65-29-65-65V206z" fill="url(#folderBack)"/>
+
+  <!-- white document -->
+  <path d="M193 64h332l81 81v354H193V64z" fill="url(#paper)"/>
+  <path d="M525 64v81h81" fill="#EEF2F6"/>
+  <path d="M525 64l81 81h-81V64z" fill="#D7DEE7"/>
+  <g stroke="#C8D0DA" stroke-width="17" stroke-linecap="round">
+    <path d="M274 178h226"/><path d="M274 228h226"/><path d="M274 278h226"/>
+  </g>
+
+  <!-- yellow document -->
+  <path d="M421 217c0-16 13-29 29-29h143c16 0 29 13 29 29v243H421V217z" fill="url(#yellow)"/>
+
+  <!-- image document -->
+  <path d="M599 157h175l84 84v240H599V157z" fill="url(#imageFile)"/>
+  <path d="M774 157v84h84" fill="#B7E1FA"/>
+  <path d="M774 157l84 84h-84V157z" fill="#68B2E2"/>
+  <circle cx="683" cy="253" r="24" fill="#E9F5FD"/>
+  <path d="M626 406l56-67 43 45 66-75 67 77v63H626v-43z" fill="#EAF5FC" opacity=".94"/>
+  <path d="M713 402l78-93 67 77v63H713v-47z" fill="#D4E9F7"/>
+
+  <!-- main folder -->
+  <path d="M123 381c0-34 28-62 62-62h353c26 0 43 9 58 25l31 32h238c35 0 63 28 63 63v344c0 36-29 65-65 65H185c-34 0-62-28-62-62V381z" fill="url(#folder)"/>
+  <path d="M155 397c6-24 23-43 48-49h333c25 0 40 8 56 24l31 32h229c27 0 48 16 58 38" stroke="#A8D8F8" stroke-opacity=".55" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- WordPress-style W medallion -->
+  <g transform="translate(225 421)" filter="url(#smallShadow)">
+    <circle cx="178" cy="178" r="157" fill="#F5F7FA"/>
+    <circle cx="178" cy="178" r="144" fill="url(#folder)"/>
+    <path d="M74 90h66l-12 18 45 135 34-95-14-40h54l-14 40 36 95 43-135-12-18h65l-28 35-77 212h-44l-39-102-37 102H99L32 125 74 90z" fill="#F7F9FB"/>
+    <path d="M78 90h200" stroke="#DDE4EA" stroke-width="4" opacity=".8"/>
+  </g>
+
+  <!-- magnifier -->
+  <g filter="url(#smallShadow)">
+    <circle cx="709" cy="683" r="145" fill="#202329"/>
+    <circle cx="709" cy="683" r="128" stroke="#51555C" stroke-width="8"/>
+    <circle cx="709" cy="683" r="100" fill="#0A1119"/>
+    <circle cx="709" cy="683" r="89" fill="url(#lens)" stroke="#8EB9E1" stroke-width="4"/>
+    <ellipse cx="680" cy="649" rx="47" ry="35" fill="#FFFFFF" opacity=".16"/>
+    <path d="M798 782l36-36 112 112c13 13 13 34 0 47l-13 13c-13 13-34 13-47 0L774 806l24-24z" fill="url(#handle)"/>
+    <path d="M813 769l108 108" stroke="#5A5F66" stroke-width="8" opacity=".45"/>
+  </g>
+</g>
+</svg>
