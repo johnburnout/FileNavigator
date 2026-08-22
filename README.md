@@ -9,17 +9,20 @@ Un navigateur de fichiers pour WordPress, propulsé par **Symfony Finder**, **Tw
 ## ✨ Fonctionnalités
 
 - 📂 Navigation dans les dossiers (arborescence cliquable)  
-- 🖼️ Aperçu des images (miniature cliquable avec zoom au survol)  
+- 🖼️ Aperçu des images (miniature avec zoom au survol)  
 - 📑 Icônes spécifiques pour les PDF  
-- ⬆️ Upload de fichiers (glisser‑déposer ou sélecteur)  
+- 📤 Upload de fichiers (glisser‑déposer ou sélecteur)  
 - ⬇️ Téléchargement d’un fichier ou d’un ZIP multiple  
 - 📋 Copier / Couper / Coller (presse‑papiers avec localStorage)  
 - ✏️ Renommer un fichier ou un dossier  
 - 🗑️ Supprimer des fichiers ou dossiers  
 - 📁 Créer un nouveau dossier  
 - 🔒 Gestion des permissions par rôle WordPress  
+- 🔍 Tri dynamique par nom, taille, date (menus déroulants)  
+- 📅 Affichage de la date au format **JJ/MM/AAAA HH:MM**  
 - 📱 Responsive et paramétrable (largeur/hauteur fixe)  
-- ⚡ AJAX pour toutes les actions (pas de rechargement)
+- ⚡ AJAX pour toutes les actions (pas de rechargement)  
+- 🎨 Barre d’outils fixe (sticky) lors du défilement
 
 ---
 
@@ -58,19 +61,30 @@ Insérez la shortcode `[filebrowser]` dans n’importe quelle page ou article.
 |:---|:---|:---|:---|
 | `root` | Dossier à explorer (relatif à `wp-content/uploads` ou chemin absolu) | `downloads`, `/chemin/absolu` | uploads |
 | `extensions` | Extensions autorisées (séparées par des virgules) | `jpg,png,pdf` | (toutes) |
-| `sort` | Critère de tri | `name`, `size`, `mtime` | `name` |
-| `order` | Ordre de tri | `asc`, `desc` | `asc` |
+| `sort` | Critère de tri (modifiable dynamiquement via l’interface) | `name`, `size`, `mtime` | `name` |
+| `order` | Ordre de tri (modifiable dynamiquement via l’interface) | `asc`, `desc` | `asc` |
 | `show_hidden` | Afficher les fichiers cachés | `true`, `false` | `false` |
 | `width` | Largeur du navigateur (CSS) | `100%`, `800px` | `100%` |
 | `height` | Hauteur du navigateur (barre de défilement) | `500px`, `80vh` | `400px` |
 | `public_download` | Autoriser les téléchargements sans connexion | `true`, `false` | `true` |
 
-### Exemples
+### Tri dynamique
+
+Le tri peut être modifié directement depuis l’interface grâce aux menus déroulants :
+
+- **Nom** (A→Z / Z→A)  
+- **Taille** (croissant / décroissant)  
+- **Date** (plus ancien / plus récent)
+
+Les paramètres sont conservés dans l’URL (`?sort=size&order=desc`) lors de la navigation.
+
+### Exemples d’utilisation
 
 ```text
 [filebrowser]
 ```
-Navigateur dans le dossier `uploads`, largeur 100%, hauteur 400px.
+Navigateur dans le dossier `uploads`, largeur 100%, hauteur 400px.  
+Date affichée en `JJ/MM/AAAA HH:MM`.
 
 ```text
 [filebrowser root="downloads" width="800px" height="600px" extensions="jpg,png,pdf"]
@@ -143,7 +157,8 @@ wp-filebrowser/
 ├── composer.json
 ├── composer.lock
 ├── wp-filebrowser.php
-└── README.md
+├── README.md
+└── readme.txt
 ```
 
 ### Tests
@@ -171,6 +186,8 @@ Les erreurs apparaîtront dans `wp-content/debug.log`.
 - Filtre `wpfb_permissions` pour personnalisation  
 - Correction de la détection des dossiers (`is_dir`)  
 - Liens cliquables pour les dossiers  
+- **Tri dynamique** par nom, taille, date (menus déroulants)  
+- **Affichage de la date au format JJ/MM/AAAA HH:MM**  
 - Amélioration de la sécurité (SecurityChecker)
 
 ### 1.0.0 – 20 août 2026
