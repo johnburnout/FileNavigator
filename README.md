@@ -196,6 +196,7 @@ Les erreurs apparaîtront dans `wp-content/debug.log`.
 ### 1.1.1 – 23 août 2026
 - Téléchargement direct en cliquant sur le nom du fichier
 - Lien de téléchargement sur chaque fichier (images, PDF, etc.)
+- Ajout du lien vers le profil GitHub de l'auteur dans l'en-tête du plugin
 
 ---
 
