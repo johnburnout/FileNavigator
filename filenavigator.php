@@ -2,7 +2,7 @@
 /**
 * Plugin Name: File Navigator
 * Description: Navigateur de fichiers avec shortcode, Symfony Finder, Twig et barre d'outils (upload, download, copier, couper, coller, supprimer, renommer, créer dossier, tri dynamique).
-* Version: 1.1.0
+* Version: 1.1.1
 * Author: Jean Roussie
 * Icon: assets/img/icon.svg
 * Text Domain: filenavigator

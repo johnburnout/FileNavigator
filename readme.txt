@@ -4,7 +4,7 @@ Tags: file manager, file browser, upload, download, symfony
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Tested up to: 7.1
@@ -125,6 +125,10 @@ Dans le dossier `wp-content/uploads/` ou dans le sous‑dossier spécifié par `
 
 = 1.1.0 =
 Mise à jour majeure avec tri dynamique, aperçu des images, barre d'outils fixe et gestion des permissions.
+
+= 1.1.1 – 23 août 2026 =
+* Téléchargement direct en cliquant sur le nom du fichier
+* Lien de téléchargement sur chaque fichier (images, PDF, etc.)
 
 == Arbitrary Section ==
 

@@ -77,18 +77,22 @@
                     
                     <span class="WPFN-item-content">
                         {% if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
-                            <span class="WPFN-thumbnail-wrapper">
-                                <img src="{{ file_url }}" alt="{{ item.name }}" class="WPFN-thumbnail">
-                                <span class="WPFN-thumbnail-zoom">
-                                    <img src="{{ file_url }}" alt="Aperçu">
-                                </span>
+                        <span class="WPFN-thumbnail-wrapper">
+                            <img src="{{ file_url }}" alt="{{ item.name }}" class="WPFN-thumbnail">
+                            <span class="WPFN-thumbnail-zoom">
+                                <img src="{{ file_url }}" alt="Aperçu">
                             </span>
+                        </span>
                         {% elseif ext == 'pdf' %}
-                            <span class="WPFN-item-icon WPFN-pdf-icon">📑</span>
+                        <span class="WPFN-item-icon WPFN-pdf-icon">📑</span>
                         {% else %}
-                            <span class="WPFN-item-icon">📄</span>
+                        <span class="WPFN-item-icon">📄</span>
                         {% endif %}
-                        <span class="WPFN-item-name">{{ item.name|e }}</span>
+                        <a href="{{ ajax_url }}?action=WPFN_download&paths={{ [item.relative]|json_encode|url_encode }}&nonce={{ nonce }}&root={{ root_path|url_encode }}" 
+                            class="WPFN-item-link" 
+                            target="_blank">
+                            {{ item.name|e }}
+                        </a>
                     </span>
                     <span class="WPFN-item-size">({{ item.size|size_format }})</span>
                     <span class="WPFN-item-date">{{ date_i18n('d/m/Y H:i', item.mtime) }}</span>
