@@ -67,6 +67,10 @@ Insérez la shortcode `[filenavigator]` dans n’importe quelle page ou article.
 | `width` | Largeur du navigateur (CSS) | `100%`, `800px` | `100%` |
 | `height` | Hauteur du navigateur (barre de défilement) | `500px`, `80vh` | `400px` |
 | `public_download` | Autoriser les téléchargements sans connexion | `true`, `false` | `true` |
+| `frame` | Affiche un cadre autour du navigateur | `true`, `false` | `false` |
+| `background` | Couleur d’arrière‑plan du conteneur et de la liste | `#f9f9f9`, `lightgray`, etc. | (vide) |
+| `toolbar_background` | Couleur d’arrière‑plan de la barre d’outils | `#e3f0fa`, `lightblue`, etc. | `#f1f1f1` (CSS) |
+| `breadcrumb_background` | Couleur d’arrière‑plan du fil d’Ariane | `#dce8f0`, `lightgray`, etc. | `#f5f5f5` (CSS) |
 
 ### Tri dynamique
 
@@ -100,6 +104,11 @@ Dossier absolu, tri par date de modification du plus récent au plus ancien.
 [filenavigator public_download="false"]
 ```
 Téléchargement uniquement autorisé aux utilisateurs connectés.
+
+```text
+[filenavigator frame="true" background="#f9f9f9" toolbar_background="#e3f0fa" breadcrumb_background="#dce8f0" width="90%" height="500px"]
+```
+Navigateur dans le dossier `uploads`, largeur 100%, hauteur 400px. Modification des couleurs.
 
 ---
 
@@ -197,6 +206,10 @@ Les erreurs apparaîtront dans `wp-content/debug.log`.
 - Téléchargement direct en cliquant sur le nom du fichier
 - Lien de téléchargement sur chaque fichier (images, PDF, etc.)
 - Ajout du lien vers le profil GitHub de l'auteur dans l'en-tête du plugin
+
+### 1.1.2 – 23 août 2026
+- Ajout des paramètres `frame`, `background`, `toolbar_background` et `breadcrumb_background` pour personnaliser l’apparence
+- Possibilité de désactiver le cadre ou de modifier les couleurs de fond
 
 ---
 

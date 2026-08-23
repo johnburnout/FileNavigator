@@ -4,7 +4,7 @@ Tags: file manager, file browser, upload, download, symfony
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 7.4
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Tested up to: 7.1
@@ -43,6 +43,10 @@ A powerful file manager for WordPress, powered by Symfony Finder and Twig.
 | `width` | Browser width (CSS value) | `100%`, `800px` | `100%` |
 | `height` | Browser height (scrollbars) | `500px`, `80vh` | `400px` |
 | `public_download` | Allow downloads for non-logged-in users | `true`, `false` | `true` |
+| `frame` | Affiche un cadre autour du navigateur | `true`, `false` | `false` |
+| `background` | Couleur d’arrière‑plan du conteneur et de la liste | `#f9f9f9`, `lightgray`, etc. | (vide) |
+| `toolbar_background` | Couleur d’arrière‑plan de la barre d’outils | `#e3f0fa`, `lightblue`, etc. | `#f1f1f1` (CSS) |
+| `breadcrumb_background` | Couleur d’arrière‑plan du fil d’Ariane | `#dce8f0`, `lightgray`, etc. | `#f5f5f5` (CSS) |
 
 ### Usage Examples
 
@@ -62,6 +66,10 @@ Absolute path, sort by modification date (newest first).
 `[filenavigator public_download="false"]`
 
 Downloads restricted to logged-in users only.
+
+`[filenavigator frame="true" background="#f9f9f9" toolbar_background="#e3f0fa" breadcrumb_background="#dce8f0" width="90%" height="500px"]`
+
+Browse the `uploads` folder, 100% width, 400px height. Changed colors.
 
 == Installation ==
 
@@ -130,6 +138,10 @@ Mise à jour majeure avec tri dynamique, aperçu des images, barre d'outils fixe
 * Téléchargement direct en cliquant sur le nom du fichier
 * Lien de téléchargement sur chaque fichier (images, PDF, etc.)
 * Ajout du lien vers le profil GitHub de l'auteur dans l'en-tête du plugin (Author URI)
+
+= 1.1.2 – 23 août 2026 =
+* Ajout des paramètres `frame`, `background`, `toolbar_background` et `breadcrumb_background`
+* Personnalisation complète de l'apparence du navigateur (cadre, couleurs)
 
 == Arbitrary Section ==
 

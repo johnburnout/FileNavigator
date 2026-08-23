@@ -2,9 +2,12 @@
      data-root="{{ root_path }}" 
      data-ajaxurl="{{ ajax_url }}" 
      data-nonce="{{ nonce }}"
-     style="width: {{ container_width }}; height: {{ container_height }}; max-height: {{ container_height }}; overflow: auto; box-sizing: border-box;">
+     style="width: {{ container_width }}; height: {{ container_height }}; max-height: {{ container_height }}; overflow: auto; box-sizing: border-box;
+            {% if frame %}border: 1px solid #ccc; border-radius: 4px;{% endif %}
+            {% if background %}background: {{ background }};{% endif %}">
+    
     <!-- Barre d'outils -->
-    <div class="WPFN-toolbar">
+    <div class="WPFN-toolbar" style="{% if toolbar_background %}background: {{ toolbar_background }};{% endif %}">
         {% if permissions.can_upload %}
             <button class="WPFN-btn WPFN-btn-upload" title="Uploader des fichiers">⬆️ UL</button>
             <input type="file" id="WPFN-upload-input" multiple style="display:none;">
@@ -30,6 +33,7 @@
         {% if permissions.can_delete %}
             <button class="WPFN-btn WPFN-btn-delete" title="Supprimer les fichiers sélectionnés">🗑️ Supprimer</button>
         {% endif %}
+        
         <!-- Tri -->
         <span class="WPFN-sort-group">
             <label for="WPFN-sort-select">Trier par</label>
@@ -43,12 +47,13 @@
                 <option value="desc" {{ current_order == 'desc' ? 'selected' : '' }}>↘️</option>
             </select>
         </span>
+        
         <span class="WPFN-status" id="WPFN-status"></span>
         <span id="WPFN-clipboard-indicator" style="display:none; margin-left:10px; color:#0073aa;">📋 Contenu du presse-papiers</span>
     </div>
 
     <!-- Breadcrumb -->
-    <div class="WPFN-breadcrumb">
+    <div class="WPFN-breadcrumb" style="{% if breadcrumb_background %}background: {{ breadcrumb_background }};{% endif %}">
         {% for crumb in breadcrumb %}
             {% if not loop.first %} / {% endif %}
             <a href="{{ add_query_arg('fb_dir', crumb.path)|esc_url }}">{{ crumb.label|e }}</a>
@@ -56,7 +61,7 @@
     </div>
 
     <!-- Liste -->
-    <ul class="WPFN-list">
+    <ul class="WPFN-list" style="{% if background %}background: {{ background }};{% endif %}">
         {% for item in items %}
             <li class="WPFN-item {{ item.isDir ? 'is-dir' : 'is-file' }}" 
                 data-path="{{ item.relative|e }}" 
@@ -77,16 +82,16 @@
                     
                     <span class="WPFN-item-content">
                         {% if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
-                        <span class="WPFN-thumbnail-wrapper">
-                            <img src="{{ file_url }}" alt="{{ item.name }}" class="WPFN-thumbnail">
-                            <span class="WPFN-thumbnail-zoom">
-                                <img src="{{ file_url }}" alt="Aperçu">
+                            <span class="WPFN-thumbnail-wrapper">
+                                <img src="{{ file_url }}" alt="{{ item.name }}" class="WPFN-thumbnail">
+                                <span class="WPFN-thumbnail-zoom">
+                                    <img src="{{ file_url }}" alt="Aperçu">
+                                </span>
                             </span>
-                        </span>
                         {% elseif ext == 'pdf' %}
-                        <span class="WPFN-item-icon WPFN-pdf-icon">📑</span>
+                            <span class="WPFN-item-icon WPFN-pdf-icon">📑</span>
                         {% else %}
-                        <span class="WPFN-item-icon">📄</span>
+                            <span class="WPFN-item-icon">📄</span>
                         {% endif %}
                         <a href="{{ ajax_url }}?action=WPFN_download&paths={{ [item.relative]|json_encode|url_encode }}&nonce={{ nonce }}&root={{ root_path|url_encode }}" 
                             class="WPFN-item-link" 

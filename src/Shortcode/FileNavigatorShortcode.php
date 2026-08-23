@@ -55,6 +55,10 @@ class FileNavigatorShortcode
             'public_download' => 'true',
             'width' => '100%',
             'height' => '400px',
+            'frame' => 'false',           // NOUVEAU
+            'background' => '',           // NOUVEAU
+            'toolbar_background' => '',    // NOUVEAU
+            'breadcrumb_background' => '', // NOUVEAU
         ], $atts, 'filenavigator');
 
         // Récupération des paramètres GET pour le tri
@@ -111,6 +115,10 @@ class FileNavigatorShortcode
                 'container_height' => $atts['height'],
                 'current_sort' => $atts['sort'],
                 'current_order' => $atts['order'],
+                'frame' => filter_var($atts['frame'], FILTER_VALIDATE_BOOLEAN),
+                'background' => sanitize_text_field($atts['background']),                
+                'toolbar_background' => sanitize_text_field($atts['toolbar_background']),
+                'breadcrumb_background' => sanitize_text_field($atts['breadcrumb_background']),
             ]);
 
         } catch (\Exception $e) {
