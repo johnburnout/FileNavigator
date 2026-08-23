@@ -186,6 +186,15 @@ Les erreurs apparaîtront dans `wp-content/debug.log`.
 
 ## 📝 Changelog
 
+### 1.1.2 – 23 août 2026
+- Ajout des paramètres `frame`, `background`, `toolbar_background` et `breadcrumb_background` pour personnaliser l’apparence
+- Possibilité de désactiver le cadre ou de modifier les couleurs de fond
+- 
+### 1.1.1 – 23 août 2026
+- Téléchargement direct en cliquant sur le nom du fichier
+- Lien de téléchargement sur chaque fichier (images, PDF, etc.)
+- Ajout du lien vers le profil GitHub de l'auteur dans l'en-tête du plugin
+
 ### 1.1.0 – 22 août 2026
 - Ajout des paramètres `width` et `height` avec barre de défilement  
 - Barre d’outils fixe (sticky)  
@@ -202,14 +211,6 @@ Les erreurs apparaîtront dans `wp-content/debug.log`.
 ### 1.0.0 – 20 août 2026
 - Version initiale : navigateur de fichiers, shortcode, Symfony Finder, Twig, barre d’outils AJAX (upload, download, copier, couper, coller, renommer, supprimer, nouveau dossier)
 
-### 1.1.1 – 23 août 2026
-- Téléchargement direct en cliquant sur le nom du fichier
-- Lien de téléchargement sur chaque fichier (images, PDF, etc.)
-- Ajout du lien vers le profil GitHub de l'auteur dans l'en-tête du plugin
-
-### 1.1.2 – 23 août 2026
-- Ajout des paramètres `frame`, `background`, `toolbar_background` et `breadcrumb_background` pour personnaliser l’apparence
-- Possibilité de désactiver le cadre ou de modifier les couleurs de fond
 
 ---
 
