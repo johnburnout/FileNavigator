@@ -4,6 +4,7 @@
 * Description: Navigateur de fichiers avec shortcode, Symfony Finder, Twig et barre d'outils (upload, download, copier, couper, coller, supprimer, renommer, créer dossier, tri dynamique).
 * Version: 1.1.1
 * Author: Jean Roussie
+* Author URI: https://github.com/johnburnout
 * Icon: assets/img/icon.svg
 * Text Domain: filenavigator
 * Domain Path: /languages
