@@ -3,7 +3,7 @@ Contributors: johnburnout
 Tags: file manager, file browser, upload, download, symfony
 Requires at least: 5.8
 Tested up to: 6.6
-Requires PHP: 7.4
+Requires PHP: 8.1
 Stable tag: 1.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html

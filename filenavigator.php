@@ -8,6 +8,9 @@
 * Icon: assets/img/icon.svg
 * Text Domain: filenavigator
 * Domain Path: /languages
+* Requires at least: 5.8
+* Requires PHP: 8.1
+* Update URI: https://github.com/johnburnout/FileNavigator
 */
 
 if (!defined('ABSPATH')) {
@@ -18,6 +21,11 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 define('WPFN_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WPFN_PLUGIN_URL', plugin_dir_url(__FILE__));
+
+// Mises à jour automatiques depuis les releases GitHub
+if (is_admin() || wp_doing_cron()) {
+    (new \WPFN\Updater\GitHubUpdater(__FILE__, 'johnburnout', 'FileNavigator'))->register();
+}
 
 add_action('init', function() {
     add_shortcode('filenavigator', ['WPFN\Shortcode\FileNavigatorShortcode', 'render']);

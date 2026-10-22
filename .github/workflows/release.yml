@@ -1,0 +1,50 @@
+name: Release
+
+# Déclenché par la publication d'un tag de version : git tag v1.2.0 && git push origin v1.2.0
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Vérifier que le tag correspond aux versions du plugin
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          HEADER=$(grep -m1 -E '^\s*\*\s*Version:' filenavigator.php | sed -E 's/.*Version:\s*//' | tr -d '[:space:]')
+          STABLE=$(grep -m1 -E '^Stable tag:' readme.txt | sed -E 's/Stable tag:\s*//' | tr -d '[:space:]')
+          echo "Tag: $TAG / En-tête: $HEADER / Stable tag: $STABLE"
+          if [ "$TAG" != "$HEADER" ] || [ "$TAG" != "$STABLE" ]; then
+            echo "::error::Le tag v$TAG ne correspond pas à 'Version' ($HEADER) dans filenavigator.php ou à 'Stable tag' ($STABLE) dans readme.txt"
+            exit 1
+          fi
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer:v2
+
+      - name: Installer les dépendances (production)
+        run: composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+
+      - name: Construire l'archive
+        run: |
+          mkdir -p build/filenavigator
+          rsync -a ./ build/filenavigator/ \
+            --exclude '.git' --exclude '.github' --exclude '.gitignore' \
+            --exclude 'build' --exclude '.DS_Store' --exclude 'structure.txt' \
+            --exclude 'composer.json' --exclude 'composer.lock' --exclude 'tests'
+          cd build && zip -rq filenavigator.zip filenavigator
+
+      - name: Publier la release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/filenavigator.zip
+          generate_release_notes: true

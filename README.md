@@ -29,7 +29,7 @@ Un navigateur de fichiers pour WordPress, propulsé par **Symfony Finder**, **Tw
 ## 📦 Prérequis
 
 - WordPress 5.8 ou supérieur  
-- PHP 7.4 ou supérieur  
+- PHP 8.1 ou supérieur (requis par Symfony 6.4)  
 - Extension PHP `zip` (pour le téléchargement groupé)  
 - Composer (pour l’installation en développement)
 
@@ -50,6 +50,33 @@ Un navigateur de fichiers pour WordPress, propulsé par **Symfony Finder**, **Tw
 2. Activez l’extension dans le menu **Extensions** de WordPress.
 
 ---
+
+## 🔄 Mises à jour automatiques
+
+Le plugin se met à jour depuis les [releases GitHub](https://github.com/johnburnout/FileNavigator/releases), comme une extension du répertoire officiel :
+
+* WordPress vérifie la dernière release (résultat mis en cache 6 h) et affiche la mise à jour dans **Extensions** et **Tableau de bord → Mises à jour** ;
+* le lien **Vérifier les mises à jour** (sous le nom du plugin) force une vérification immédiate ;
+* le bouton **Activer les mises à jour auto** de la liste des extensions permet l'installation sans intervention.
+
+### Publier une nouvelle version
+
+1. Mettre à jour `Version:` dans `filenavigator.php` et `Stable tag:` dans `readme.txt` (ex. `1.2.0`), ainsi que le changelog.
+2. Committer, puis créer et pousser le tag :
+   ```bash
+   git tag v1.2.0
+   git push origin main v1.2.0
+   ```
+3. Le workflow GitHub Actions `.github/workflows/release.yml` installe les dépendances Composer, construit `filenavigator.zip` (avec `vendor/`) et publie la release.
+
+> Seules les releases contenant l'asset `filenavigator.zip` sont proposées (l'archive source de GitHub ne contient pas `vendor/`). Les brouillons et pré-versions sont ignorés.
+
+### Options (`wp-config.php`)
+
+```php
+define('WPFN_GITHUB_TOKEN', 'ghp_xxx');    // dépôt privé ou limite de l'API GitHub (60 req/h sans jeton)
+define('WPFN_FORCE_AUTO_UPDATE', true);    // forcer l'installation automatique
+```
 
 ## 🧩 Utilisation de la shortcode
 
