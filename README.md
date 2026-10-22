@@ -213,6 +213,11 @@ Les erreurs apparaîtront dans `wp-content/debug.log`.
 
 ## 📝 Changelog
 
+### 1.2.0 – 22 octobre 2026
+- Mises à jour automatiques depuis les releases GitHub
+- Lien « Vérifier les mises à jour » dans la liste des extensions
+- PHP 8.1 minimum (requis par Symfony 6.4)
+
 ### 1.1.2 – 23 août 2026
 - Ajout des paramètres `frame`, `background`, `toolbar_background` et `breadcrumb_background` pour personnaliser l’apparence
 - Possibilité de désactiver le cadre ou de modifier les couleurs de fond

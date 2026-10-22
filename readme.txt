@@ -4,7 +4,7 @@ Tags: file manager, file browser, upload, download, symfony
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 8.1
-Stable tag: 1.1.2
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Tested up to: 7.1
@@ -152,3 +152,8 @@ Le plugin est open‑source. Les contributions sont les bienvenues sur GitHub :
 [https://github.com/johnburnout/FileNavigator](https://github.com/johnburnout/FileNavigator)
 
 Merci d'utiliser File Navigator ! 🚀
+
+= 1.2.0 – 22 octobre 2026 =
+* Mises à jour automatiques depuis les releases GitHub
+* Lien « Vérifier les mises à jour » dans la liste des extensions
+* PHP 8.1 minimum (requis par Symfony 6.4)

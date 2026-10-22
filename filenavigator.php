@@ -2,7 +2,7 @@
 /**
 * Plugin Name: File Navigator
 * Description: Navigateur de fichiers avec shortcode, Symfony Finder, Twig et barre d'outils (upload, download, copier, couper, coller, supprimer, renommer, créer dossier, tri dynamique).
-* Version: 1.1.2
+* Version: 1.2.0
 * Author: Jean Roussie
 * Author URI: https://github.com/johnburnout
 * Icon: assets/img/icon.svg
@@ -33,7 +33,7 @@ add_action('init', function() {
 
 add_action('wp_enqueue_scripts', function() {
     wp_enqueue_style('WPFN-style', WPFN_PLUGIN_URL . 'assets/css/style.css');
-    wp_enqueue_script('WPFN-script', WPFN_PLUGIN_URL . 'assets/js/main.js', ['jquery'], '1.1', true);
+    wp_enqueue_script('WPFN-script', WPFN_PLUGIN_URL . 'assets/js/main.js', ['jquery'], '1.2.0', true);
 });
 
 // ================================
