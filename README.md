@@ -62,6 +62,7 @@ Le plugin se met à jour depuis les [releases GitHub](https://github.com/johnbur
 ### Publier une nouvelle version
 
 1. Mettre à jour `Version:` dans `filenavigator.php` et `Stable tag:` dans `readme.txt` (ex. `1.2.0`), ainsi que le changelog.
+   Rédiger le descriptif de la release dans `.github/release-notes/vX.Y.Z.md` : il est repris automatiquement par le workflow (suivi de la liste des commits).
 2. Committer, puis créer et pousser le tag :
    ```bash
    git tag v1.2.0

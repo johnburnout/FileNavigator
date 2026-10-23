@@ -43,8 +43,19 @@ jobs:
             --exclude 'composer.json' --exclude 'composer.lock' --exclude 'tests'
           cd build && zip -rq filenavigator.zip filenavigator
 
+      - name: Notes de version
+        id: notes
+        run: |
+          NOTES=".github/release-notes/${GITHUB_REF_NAME}.md"
+          if [ -f "$NOTES" ]; then
+            echo "path=$NOTES" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Aucun descriptif trouvé ($NOTES) : notes générées automatiquement uniquement."
+          fi
+
       - name: Publier la release
         uses: softprops/action-gh-release@v2
         with:
           files: build/filenavigator.zip
+          body_path: ${{ steps.notes.outputs.path }}
           generate_release_notes: true
