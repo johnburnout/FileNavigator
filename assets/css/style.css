@@ -226,3 +226,97 @@
     font-size: 12px;
     cursor: pointer;
 }
+/* --- Glisser-déposer (upload) --- */
+.WPFN-filenavigator.WPFN-dragover {
+    outline: 3px dashed #0073aa;
+    outline-offset: -3px;
+    background-color: rgba(0, 115, 170, 0.06) !important;
+}
+.WPFN-filenavigator.WPFN-dragover::after {
+    content: attr(data-drop-label);
+    position: sticky;
+    bottom: 0;
+    display: block;
+    z-index: 11;
+    padding: 10px;
+    text-align: center;
+    font-weight: bold;
+    color: #fff;
+    background: #0073aa;
+    pointer-events: none;
+}
+.WPFN-filenavigator.WPFN-dragover * {
+    pointer-events: none; /* évite les dragleave parasites sur les éléments enfants */
+}
+
+/* --- Fenêtre de conflit --- */
+.WPFN-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.45);
+}
+.WPFN-modal {
+    width: 100%;
+    max-width: 480px;
+    padding: 20px 24px;
+    border-radius: 6px;
+    background: #fff;
+    color: #1d2327;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    font-size: 14px;
+    line-height: 1.5;
+}
+.WPFN-modal h3 {
+    margin: 0 0 10px;
+    font-size: 17px;
+}
+.WPFN-modal p {
+    margin: 0 0 10px;
+    word-break: break-word;
+}
+.WPFN-modal-help {
+    margin: 0 0 12px;
+    padding-left: 18px;
+    font-size: 13px;
+    color: #50575e;
+}
+.WPFN-modal-note {
+    font-size: 13px;
+    color: #b32d2e;
+}
+.WPFN-modal-applyall {
+    display: block;
+    margin: 0 0 14px;
+    font-size: 13px;
+    cursor: pointer;
+}
+.WPFN-modal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+}
+.WPFN-modal .WPFN-btn {
+    padding: 6px 14px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    background: #fff;
+    font-size: 13px;
+    cursor: pointer;
+}
+.WPFN-modal .WPFN-btn:hover:not(:disabled) {
+    background: #e9e9e9;
+}
+.WPFN-modal .WPFN-btn-primary {
+    border-color: #0073aa;
+    color: #0073aa;
+}
+.WPFN-modal .WPFN-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}

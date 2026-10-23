@@ -11,7 +11,7 @@ Un navigateur de fichiers pour WordPress, propulsé par **Symfony Finder**, **Tw
 - 📂 Navigation dans les dossiers (arborescence cliquable)  
 - 🖼️ Aperçu des images (miniature avec zoom au survol)  
 - 📑 Icônes spécifiques pour les PDF  
-- 📤 Upload de fichiers (glisser‑déposer ou sélecteur)  
+- 📤 Upload de fichiers et de dossiers entiers (glisser‑déposer dans la fenêtre ou sélecteur), avec choix en cas de conflit : remplacer, fusionner (dossiers) ou garder les deux  
 - ⬇️ Téléchargement d’un fichier ou d’un ZIP multiple  
 - 📋 Copier / Couper / Coller (presse‑papiers avec localStorage)  
 - ✏️ Renommer un fichier ou un dossier  
@@ -145,12 +145,27 @@ Navigateur dans le dossier `uploads`, largeur 100%, hauteur 400px. Modification 
 |:---|:---|:---|
 | Voir le navigateur | `read` | Tous (abonné) |
 | Télécharger | `read` ou `public_download=true` | Tous |
-| Uploader | `upload_files` | Contributeur |
+| Uploader (bouton ou glisser‑déposer) | `upload_files` | Auteur |
+| Remplacer / fusionner un élément existant lors d’un upload | `upload_files` + `delete_posts` | Auteur |
 | Copier / Couper | `edit_posts` | Auteur |
 | Coller | `edit_posts` | Auteur |
 | Renommer | `edit_posts` | Auteur |
 | Supprimer | `delete_posts` | Auteur |
 | Créer un dossier | `edit_posts` | Auteur |
+
+### Types de fichiers autorisés à l’upload
+
+Par défaut : les types autorisés par WordPress (`get_allowed_mime_types()`) **+ WebP**. Le contenu réel de chaque fichier est vérifié (`wp_check_filetype_and_ext()`), et les fichiers dont le contenu ne correspond pas à l’extension sont refusés.
+
+Toujours refusés, même en double extension : scripts serveur (`php`, `phtml`, `phar`, `cgi`, `pl`, `py`, `sh`, `asp`, `jsp`…), exécutables (`exe`, `bat`, `msi`…), fichiers de configuration (`.htaccess`, `.user.ini`…) et contenus actifs dans le navigateur (`html`, `js`, `svg`). Les fichiers sans extension sont refusés.
+
+```php
+add_filter('WPFN_allowed_mimes', function($mimes) {
+    $mimes['csv'] = 'text/csv';   // ajouter un type
+    unset($mimes['mp3|m4a|m4b']); // en retirer un
+    return $mimes;
+});
+```
 
 **Personnalisation** : utilisez le filtre `WPFN_permissions` dans votre `functions.php` pour modifier les droits.
 
@@ -212,6 +227,19 @@ Les erreurs apparaîtront dans `wp-content/debug.log`.
 ---
 
 ## 📝 Changelog
+
+### 1.3.0 – 23 octobre 2026
+- Upload par glisser‑déposer de fichiers **et de dossiers** (sous‑dossiers et dossiers vides inclus) dans la fenêtre du navigateur, pour les utilisateurs connectés ayant le droit `upload_files`
+- Fenêtre de conflit si un élément existe déjà : **Remplacer** ou **Garder les deux** pour un fichier ; **Fusionner**, **Remplacer** ou **Garder les deux** pour un dossier, avec option « Appliquer à tous »
+- Remplacer / fusionner nécessite en plus le droit `delete_posts`
+- Le bouton ⬆️ UL utilise la même fenêtre de conflit (auparavant renommage automatique)
+- Envoi par lots respectant `max_file_uploads` et la taille maximale d’upload, avec progression
+- Nouveaux endpoints AJAX `WPFN_check_exists` et `WPFN_prepare_upload`
+- **Sécurité** : le dossier racine transmis par le navigateur est signé (HMAC) et vérifié par le serveur pour toutes les actions, y compris le téléchargement public
+- **Sécurité** : `public_download="false"` est désormais appliqué côté serveur (téléchargement réservé aux utilisateurs connectés)
+- **Sécurité** : contrôle des fichiers envoyés — extensions autorisées par WordPress + WebP, extensions dangereuses toujours refusées (même en double extension, ex. `image.php.jpg`), vérification du contenu réel (signature du fichier comparée à l’extension) et détection de code PHP caché dans les images
+- **Sécurité** : le renommage ne peut plus changer l’extension vers un type interdit ni sortir du dossier
+- Remplacer un fichier par un fichier conserve l’ancien si le nouveau est refusé
 
 ### 1.2.0 – 22 octobre 2026
 - Mises à jour automatiques depuis les releases GitHub

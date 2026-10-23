@@ -4,7 +4,7 @@ Tags: file manager, file browser, upload, download, symfony
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 8.1
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Tested up to: 7.1
@@ -112,6 +112,16 @@ Dans le dossier `wp-content/uploads/` ou dans le sous‑dossier spécifié par `
 4. Menus de tri dynamique.
 
 == Changelog ==
+
+= 1.3.0 – 23 octobre 2026 =
+* Upload par glisser-déposer de fichiers et de dossiers dans la fenêtre du navigateur (utilisateurs connectés avec `upload_files`)
+* Fenêtre de conflit : Remplacer / Garder les deux (fichiers), Fusionner / Remplacer / Garder les deux (dossiers), option « Appliquer à tous »
+* Remplacer ou fusionner nécessite aussi `delete_posts`
+* Envoi par lots (respect de `max_file_uploads` et de la taille maximale) avec progression
+* Sécurité : dossier racine signé et vérifié côté serveur pour toutes les actions
+* Sécurité : `public_download="false"` appliqué côté serveur
+* Sécurité : contrôle des fichiers envoyés (types WordPress + WebP, extensions dangereuses refusées même en double extension, vérification du contenu réel, détection de code PHP dans les images) ; filtre `WPFN_allowed_mimes`
+* Sécurité : le renommage ne peut plus produire une extension interdite ni sortir du dossier
 
 = 1.1.0 – 22 août 2026 =
 * Ajout des paramètres `width` et `height` avec barre de défilement

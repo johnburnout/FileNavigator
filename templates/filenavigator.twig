@@ -1,7 +1,15 @@
 <div class="WPFN-filenavigator" 
      data-root="{{ root_path }}" 
+     data-root-sig="{{ root_sig }}"
+     data-root-pd="{{ root_pd }}"
+     data-allowed-ext="{{ allowed_ext }}"
+     data-blocked-ext="{{ blocked_ext }}"
      data-ajaxurl="{{ ajax_url }}" 
      data-nonce="{{ nonce }}"
+     data-can-upload="{{ permissions.can_upload ? '1' : '0' }}"
+     data-can-delete="{{ permissions.can_delete ? '1' : '0' }}"
+     data-max-upload="{{ max_upload }}"
+     data-max-files="{{ max_files }}"
      style="width: {{ container_width }}; height: {{ container_height }}; max-height: {{ container_height }}; overflow: auto; box-sizing: border-box;
             {% if frame %}border: 1px solid #ccc; border-radius: 4px;{% endif %}
             {% if background %}background: {{ background }};{% endif %}">
@@ -9,7 +17,7 @@
     <!-- Barre d'outils -->
     <div class="WPFN-toolbar" style="{% if toolbar_background %}background: {{ toolbar_background }};{% endif %}">
         {% if permissions.can_upload %}
-            <button class="WPFN-btn WPFN-btn-upload" title="Uploader des fichiers">⬆️ UL</button>
+            <button class="WPFN-btn WPFN-btn-upload" title="Uploader des fichiers (ou glissez-déposez fichiers et dossiers dans la fenêtre)">⬆️ UL</button>
             <input type="file" id="WPFN-upload-input" multiple style="display:none;">
         {% endif %}
         {% if permissions.can_download %}
@@ -93,7 +101,7 @@
                         {% else %}
                             <span class="WPFN-item-icon">📄</span>
                         {% endif %}
-                        <a href="{{ ajax_url }}?action=WPFN_download&paths={{ [item.relative]|json_encode|url_encode }}&nonce={{ nonce }}&root={{ root_path|url_encode }}" 
+                        <a href="{{ ajax_url }}?action=WPFN_download&paths={{ [item.relative]|json_encode|url_encode }}&nonce={{ nonce }}&root={{ root_path|url_encode }}&root_sig={{ root_sig }}&root_pd={{ root_pd }}" 
                             class="WPFN-item-link" 
                             target="_blank">
                             {{ item.name|e }}
