@@ -245,8 +245,15 @@
     background: #0073aa;
     pointer-events: none;
 }
-.WPFN-filenavigator.WPFN-dragover * {
-    pointer-events: none; /* évite les dragleave parasites sur les éléments enfants */
+.WPFN-filenavigator.WPFN-dragover .WPFN-thumbnail-zoom {
+    display: none; /* pas d'aperçu d'image pendant le glisser */
+}
+/* Dossier de la liste visé par le glisser-déposer */
+.WPFN-item.WPFN-drop-target {
+    outline: 2px solid #0073aa;
+    outline-offset: -2px;
+    background: rgba(0, 115, 170, 0.15);
+    border-radius: 3px;
 }
 
 /* --- Fenêtre de conflit --- */

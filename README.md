@@ -229,6 +229,9 @@ Les erreurs apparaîtront dans `wp-content/debug.log`.
 
 ## 📝 Changelog
 
+### 1.3.1 – 4 novembre 2026
+- Glisser‑déposer sur un dossier de la liste : les fichiers et dossiers sont envoyés dans ce dossier, et non dans le dossier ouvert (le dossier visé est surligné et indiqué dans le bandeau)
+
 ### 1.3.0 – 23 octobre 2026
 - Upload par glisser‑déposer de fichiers **et de dossiers** (sous‑dossiers et dossiers vides inclus) dans la fenêtre du navigateur, pour les utilisateurs connectés ayant le droit `upload_files`
 - Fenêtre de conflit si un élément existe déjà : **Remplacer** ou **Garder les deux** pour un fichier ; **Fusionner**, **Remplacer** ou **Garder les deux** pour un dossier, avec option « Appliquer à tous »

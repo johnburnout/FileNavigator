@@ -4,7 +4,7 @@ Tags: file manager, file browser, upload, download, symfony
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 8.1
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Tested up to: 7.1
@@ -112,6 +112,9 @@ Dans le dossier `wp-content/uploads/` ou dans le sous‑dossier spécifié par `
 4. Menus de tri dynamique.
 
 == Changelog ==
+
+= 1.3.1 – 4 novembre 2026 =
+* Glisser-déposer sur un dossier de la liste : les fichiers et dossiers sont envoyés dans ce dossier (surbrillance du dossier visé)
 
 = 1.3.0 – 23 octobre 2026 =
 * Upload par glisser-déposer de fichiers et de dossiers dans la fenêtre du navigateur (utilisateurs connectés avec `upload_files`)

@@ -133,8 +133,24 @@
         bindDropZone: function() {
             const self = this;
             let depth = 0;
-            this.container.attr('data-drop-label',
-                '⬆️ Déposez ici pour envoyer dans « ' + (this.currentDir || 'Racine') + ' »');
+            let $target = $();
+
+            // Dossier visé : ligne d'un dossier de la liste sous le curseur, sinon le dossier ouvert
+            const setTarget = function($item) {
+                if ($item.is($target)) return;
+                $target.removeClass('WPFN-drop-target');
+                $target = $item;
+                $target.addClass('WPFN-drop-target');
+                const dir = $target.length ? $target.attr('data-path') : self.currentDir;
+                self.container.attr('data-drop-label',
+                    '⬆️ Déposez ici pour envoyer dans « ' + (dir || 'Racine') + ' »');
+            };
+            const reset = function() {
+                depth = 0;
+                setTarget($());
+                self.container.removeClass('WPFN-dragover');
+            };
+            setTarget($());
 
             this.container.on('dragenter', function(e) {
                 if (!self.hasFiles(e)) return;
@@ -146,24 +162,26 @@
                 if (!self.hasFiles(e)) return;
                 e.preventDefault();
                 e.originalEvent.dataTransfer.dropEffect = 'copy';
+                setTarget($(e.target).closest('.WPFN-item.is-dir', self.container[0]));
             });
             this.container.on('dragleave', function(e) {
                 if (!self.hasFiles(e)) return;
                 depth = Math.max(0, depth - 1);
-                if (depth === 0) self.container.removeClass('WPFN-dragover');
+                if (depth === 0) reset();
             });
             this.container.on('drop', function(e) {
                 if (!self.hasFiles(e)) return;
                 e.preventDefault();
-                depth = 0;
-                self.container.removeClass('WPFN-dragover');
+                const $item = $(e.target).closest('.WPFN-item.is-dir', self.container[0]);
+                const targetDir = $item.length ? String($item.attr('data-path') || '') : self.currentDir;
+                reset();
                 if (self.busy) {
                     self.setStatus('Un envoi est déjà en cours.', true);
                     return;
                 }
                 // Les entrées doivent être lues immédiatement (le DataTransfer est vidé ensuite)
                 self.collectDropped(e.originalEvent.dataTransfer)
-                    .then(function(res) { self.startUpload(res.files, res.dirs); })
+                    .then(function(res) { self.startUpload(res.files, res.dirs, targetDir); })
                     .catch(function(err) {
                         console.error('File Navigator drop:', err);
                         self.setStatus('Impossible de lire les éléments déposés.', true);
@@ -269,7 +287,8 @@
         },
 
         // Point d'entrée commun (bouton UL et glisser-déposer)
-        startUpload: async function(files, dirs) {
+        // targetDir : dossier de destination (relatif à la racine), par défaut le dossier ouvert
+        startUpload: async function(files, dirs, targetDir) {
             const self = this;
             dirs = dirs || [];
             if (!files.length && !dirs.length) {
@@ -317,11 +336,12 @@
             const topItems = Object.keys(top).map(k => top[k]);
 
             self.busy = true;
+            self.uploadDir = typeof targetDir === 'string' ? targetDir : self.currentDir;
             try {
                 self.setProgress('Vérification…');
                 const check = await self.post('WPFN_check_exists', {
                     names: JSON.stringify(topItems.map(i => i.name)),
-                    current_dir: self.currentDir
+                    current_dir: self.uploadDir
                 });
 
                 // 3. Choix de l'utilisateur pour chaque conflit
@@ -334,7 +354,7 @@
                 // 4. Application des choix (suppression / renommage) côté serveur
                 const prep = await self.post('WPFN_prepare_upload', {
                     items: JSON.stringify(decided),
-                    current_dir: self.currentDir
+                    current_dir: self.uploadDir
                 });
                 const mapping = prep.mapping || {};
                 const remap = function(path) {
@@ -351,7 +371,7 @@
                     alert(res.count + ' fichier(s) envoyé(s), ' + res.rejected.length + ' refusé(s) après vérification du contenu :\n' +
                         res.rejected.slice(0, 8).map(r => '• ' + r.reason).join('\n') + (res.rejected.length > 8 ? '\n…' : ''));
                 } else {
-                    self.setStatus('Upload réussi (' + res.count + ' fichier(s)).');
+                    self.setStatus('Upload réussi (' + res.count + ' fichier(s)) dans « ' + (self.uploadDir || 'Racine') + ' ».');
                 }
                 location.reload();
             } catch (err) {
@@ -398,7 +418,7 @@
             const self = this;
             return new Promise(function(resolve) {
                 const what = existing.isDir ? 'Le dossier' : 'Le fichier';
-                const where = self.currentDir || 'Racine';
+                const where = self.uploadDir || 'Racine';
                 const options = bothDirs
                     ? [
                         { action: 'merge', label: 'Fusionner', help: 'Ajoute le contenu au dossier existant ; les fichiers de même nom sont écrasés.', needsDelete: true },
@@ -499,7 +519,7 @@
                 formData.append('root', self.root);
                 formData.append('root_sig', self.rootSig);
                 formData.append('root_pd', self.rootPd);
-                formData.append('current_dir', self.currentDir);
+                formData.append('current_dir', self.uploadDir);
 
                 $.ajax({
                     url: self.ajaxurl,
