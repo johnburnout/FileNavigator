@@ -33,9 +33,8 @@ class FileNavigatorService
         }
 
         $finder = (new Finder())->in($currentDir)->depth(0);
-        if (!$options['show_hidden']) {
-            $finder->notName('/^\..*$/');
-        }
+        // Finder ignore les fichiers commençant par un point par défaut
+        $finder->ignoreDotFiles(!$options['show_hidden']);
 
         match ($options['sort']) {
             'size' => $finder->sortBySize(),
