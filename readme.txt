@@ -4,7 +4,7 @@ Tags: file manager, file browser, upload, download, symfony
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 8.1
-Stable tag: 1.3.1
+Stable tag: 1.3.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Tested up to: 7.1
@@ -112,6 +112,12 @@ Dans le dossier `wp-content/uploads/` ou dans le sous‑dossier spécifié par `
 4. Menus de tri dynamique.
 
 == Changelog ==
+
+= 1.3.2 – 7 novembre 2026 =
+* Correction : l'option `show_hidden="true"` affiche désormais les fichiers et dossiers cachés (les dossiers `.git`, `.svn`… restent masqués)
+* Correction : renommage des fichiers dont le nom contient une apostrophe
+* Coller : en cas de doublon, les dossiers et fichiers cachés sont renommés comme à l'upload (`dossier.v2_1`, `.htaccess_1`)
+* Refactorisation interne du code PHP (endpoints AJAX regroupés dans une classe)
 
 = 1.3.1 – 4 novembre 2026 =
 * Glisser-déposer sur un dossier de la liste : les fichiers et dossiers sont envoyés dans ce dossier (surbrillance du dossier visé)

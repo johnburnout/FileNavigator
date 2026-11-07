@@ -229,6 +229,12 @@ Les erreurs apparaîtront dans `wp-content/debug.log`.
 
 ## 📝 Changelog
 
+### 1.3.2 – 7 novembre 2026
+- Correction : l’option `show_hidden="true"` affiche désormais les fichiers et dossiers cachés (les dossiers de versionnage `.git`, `.svn`… restent masqués)
+- Correction : le renommage des fichiers dont le nom contient une apostrophe (ex. `l'été.jpg`) échouait avec « Chemin non autorisé »
+- Coller : en cas de doublon, les dossiers et fichiers cachés sont renommés comme à l’upload (`dossier.v2_1` au lieu de `dossier_1.v2`, `.htaccess_1` au lieu de `_1.htaccess`)
+- Refactorisation interne : endpoints AJAX regroupés dans `WPFN\Ajax\AjaxController`, signature du dossier racine dans `WPFN\FileNavigator\RootSignature`, résolution des chemins mutualisée
+
 ### 1.3.1 – 4 novembre 2026
 - Glisser‑déposer sur un dossier de la liste : les fichiers et dossiers sont envoyés dans ce dossier, et non dans le dossier ouvert (le dossier visé est surligné et indiqué dans le bandeau)
 
