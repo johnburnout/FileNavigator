@@ -11,21 +11,20 @@ class FileNavigatorService
 
     public function __construct(string $rootPath)
     {
-        $this->rootPath = realpath($rootPath) ?: $rootPath;
-        $this->security = new SecurityChecker($this->rootPath);
+        $this->security = new SecurityChecker($rootPath);
+        $this->rootPath = $this->security->getRootPath();
     }
 
     public function listDirectory(string $dir = '', array $options = []): array
     {
-        $defaults = [
+        $options = array_merge([
             'extensions' => [],
             'sort' => 'name',
             'order' => 'asc',
             'show_hidden' => false,
-        ];
-        $options = array_merge($defaults, $options);
+        ], $options);
 
-        $currentDir = $this->buildAbsolutePath($dir);
+        $currentDir = $this->security->resolve($dir);
         if (!$this->security->isPathSafe($currentDir)) {
             throw new \RuntimeException('Chemin non autorisé');
         }
@@ -33,88 +32,54 @@ class FileNavigatorService
             throw new \RuntimeException('Le répertoire n\'existe pas');
         }
 
-        $finder = new Finder();
-        $finder->in($currentDir)->depth(0);
-
+        $finder = (new Finder())->in($currentDir)->depth(0);
         if (!$options['show_hidden']) {
             $finder->notName('/^\..*$/');
         }
 
-        // Tri selon l'option
-        switch ($options['sort']) {
-            case 'size':
-                $finder->sortBySize();
-                break;
-            case 'mtime':
-                $finder->sortByModifiedTime();
-                break;
-            case 'name':
-            default:
-                $finder->sortByName();
-                break;
-        }
-
+        match ($options['sort']) {
+            'size' => $finder->sortBySize(),
+            'mtime' => $finder->sortByModifiedTime(),
+            default => $finder->sortByName(),
+        };
         if ($options['order'] === 'desc') {
             $finder->reverseSorting();
         }
 
+        $extensions = array_map('strtolower', $options['extensions']);
+
         $items = [];
         foreach ($finder as $fileInfo) {
-            // Filtrer par extension pour les fichiers
-            if (!empty($options['extensions']) && $fileInfo->isFile()) {
-                $ext = pathinfo($fileInfo->getFilename(), PATHINFO_EXTENSION);
-                if (!in_array(strtolower($ext), array_map('strtolower', $options['extensions']))) {
-                    continue;
-                }
+            $name = $fileInfo->getFilename();
+            // Filtre par extension (fichiers uniquement)
+            if ($extensions && $fileInfo->isFile()
+                && !in_array(strtolower(pathinfo($name, PATHINFO_EXTENSION)), $extensions, true)) {
+                continue;
             }
 
-            // 🔧 Correction : utiliser is_dir() sur le chemin réel pour une détection fiable
-//          $realPath = $fileInfo->getPathname();
-//          $isDir = is_dir($realPath);
-//
-//          // Calcul du chemin relatif (sécurisé)
-//          $relative = Path::makeRelative($realPath, $this->rootPath);
-//          // Si le chemin relatif commence par '..', on le recalcule manuellement
-//          if (strpos($relative, '..') === 0) {
-//              $relative = ltrim(str_replace($this->rootPath, '', $realPath), '/');
-//              // Si le résultat est vide, on met le nom de base
-//              if (empty($relative)) {
-//                  $relative = $fileInfo->getFilename();
-//              }
-            
             $realPath = $fileInfo->getPathname();
-            $isDir = is_dir($realPath);
-            
-            // Calcul du chemin relatif (robuste)
-            $relative = Path::makeRelative($realPath, $this->rootPath);
-            if (strpos($relative, '..') === 0 || $relative === '') {
-                // Recalcul manuel
-                $relative = ltrim(str_replace($this->rootPath, '', $realPath), '/');
-                if (empty($relative)) {
-                    $relative = $fileInfo->getFilename();
-                }
-            }
-
             $items[] = [
-                'name' => $fileInfo->getFilename(),
+                'name' => $name,
                 'path' => $realPath,
-                'relative' => $relative,
-                'isDir' => $isDir,
+                'relative' => $this->relativePath($realPath, $name),
+                'isDir' => is_dir($realPath),
                 'size' => $fileInfo->isFile() ? $fileInfo->getSize() : 0,
                 'mtime' => $fileInfo->getMTime(),
-                'isHidden' => $fileInfo->getFilename()[0] === '.',
+                'isHidden' => $name[0] === '.',
             ];
         }
 
         return $items;
     }
 
-    private function buildAbsolutePath(string $relative): string
+    private function relativePath(string $absolute, string $name): string
     {
-        $safe = Path::canonicalize($relative);
-        if ($safe === '' || $safe === '.') {
-            return $this->rootPath;
+        $relative = Path::makeRelative($absolute, $this->rootPath);
+        if (!str_starts_with($relative, '..') && $relative !== '') {
+            return $relative;
         }
-        return Path::makeAbsolute($safe, $this->rootPath);
+        // Recalcul manuel (racine non canonique, liens…)
+        $relative = ltrim(str_replace($this->rootPath, '', $absolute), '/');
+        return $relative !== '' ? $relative : $name;
     }
 }

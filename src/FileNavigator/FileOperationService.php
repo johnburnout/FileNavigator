@@ -2,19 +2,18 @@
 namespace WPFN\FileNavigator;
 
 use Symfony\Component\Filesystem\Filesystem;
-use Symfony\Component\Filesystem\Path;
 
 class FileOperationService
 {
-    private string $rootPath;
     private SecurityChecker $security;
     private UploadValidator $validator;
+    private Filesystem $fs;
 
     public function __construct(string $rootPath, ?UploadValidator $validator = null)
     {
-        $this->rootPath = realpath($rootPath) ?: $rootPath;
-        $this->security = new SecurityChecker($this->rootPath);
+        $this->security = new SecurityChecker($rootPath);
         $this->validator = $validator ?? new UploadValidator();
+        $this->fs = new Filesystem();
     }
 
     /**
@@ -27,10 +26,7 @@ class FileOperationService
      */
     public function upload(array $files, string $targetDir, ?array $relativePaths = null, array $emptyDirs = []): array
     {
-        $absoluteTarget = $this->buildAbsolutePath($targetDir);
-        if (!is_dir($absoluteTarget) || !$this->security->isPathSafe($absoluteTarget)) {
-            throw new \RuntimeException('Chemin non autorisé');
-        }
+        $absoluteTarget = $this->resolveDirectory($targetDir);
         $uploaded = [];
         $rejected = [];
 
@@ -92,15 +88,12 @@ class FileOperationService
      */
     public function findExisting(array $names, string $targetDir): array
     {
-        $absoluteTarget = $this->buildAbsolutePath($targetDir);
-        if (!is_dir($absoluteTarget) || !$this->security->isPathSafe($absoluteTarget)) {
-            throw new \RuntimeException('Chemin non autorisé');
-        }
+        $absoluteTarget = $this->resolveDirectory($targetDir);
         $existing = [];
         foreach (array_unique(array_map('strval', $names)) as $name) {
             $name = $this->validateName($name);
             $path = $absoluteTarget . '/' . $name;
-            if (file_exists($path) || is_link($path)) {
+            if ($this->exists($path)) {
                 $existing[] = ['name' => $name, 'isDir' => is_dir($path)];
             }
         }
@@ -117,10 +110,7 @@ class FileOperationService
      */
     public function prepareUpload(array $items, string $targetDir): array
     {
-        $absoluteTarget = $this->buildAbsolutePath($targetDir);
-        if (!is_dir($absoluteTarget) || !$this->security->isPathSafe($absoluteTarget)) {
-            throw new \RuntimeException('Chemin non autorisé');
-        }
+        $absoluteTarget = $this->resolveDirectory($targetDir);
 
         // Noms réservés : on évite qu'un « garder les deux » prenne le nom d'un autre élément envoyé
         $reserved = [];
@@ -128,19 +118,16 @@ class FileOperationService
             $reserved[] = $this->validateName((string) ($item['name'] ?? ''));
         }
 
-        $fs = new Filesystem();
         $mapping = [];
         foreach ($items as $item) {
             $name = $this->validateName((string) ($item['name'] ?? ''));
             $isDir = !empty($item['isDir']);
             $action = (string) ($item['action'] ?? 'new');
             $path = $absoluteTarget . '/' . $name;
-            $exists = file_exists($path) || is_link($path);
-
             if (!$isDir) {
                 $this->validator->checkName($name);
             }
-            if (!$exists) {
+            if (!$this->exists($path)) {
                 $mapping[$name] = $name;
                 continue;
             }
@@ -155,7 +142,7 @@ class FileOperationService
                         $mapping[$name] = $name;
                         break;
                     }
-                    $fs->remove($path);
+                    $this->fs->remove($path);
                     $mapping[$name] = $name;
                     break;
 
@@ -185,13 +172,11 @@ class FileOperationService
      */
     private function uniqueName(string $dir, string $name, bool $isDir, array $reserved = []): string
     {
-        $taken = function (string $candidate) use ($dir, $reserved): bool {
-            $path = $dir . '/' . $candidate;
-            return file_exists($path) || is_link($path) || in_array($candidate, $reserved, true);
-        };
-        if (!file_exists($dir . '/' . $name) && !is_link($dir . '/' . $name)) {
+        if (!$this->exists($dir . '/' . $name)) {
             return $name;
         }
+        $taken = fn (string $candidate): bool =>
+            $this->exists($dir . '/' . $candidate) || in_array($candidate, $reserved, true);
 
         $base = $name;
         $ext = '';
@@ -259,40 +244,32 @@ class FileOperationService
 
     private function uploadErrorMessage(int $code): string
     {
-        switch ($code) {
-            case UPLOAD_ERR_INI_SIZE:
-            case UPLOAD_ERR_FORM_SIZE:
-                return 'fichier trop volumineux';
-            case UPLOAD_ERR_PARTIAL:
-                return 'envoi incomplet';
-            case UPLOAD_ERR_NO_FILE:
-                return 'aucun fichier reçu';
-            case UPLOAD_ERR_NO_TMP_DIR:
-                return 'dossier temporaire manquant';
-            case UPLOAD_ERR_CANT_WRITE:
-                return 'écriture impossible sur le disque';
-            default:
-                return 'erreur ' . $code;
-        }
+        return match ($code) {
+            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'fichier trop volumineux',
+            UPLOAD_ERR_PARTIAL => 'envoi incomplet',
+            UPLOAD_ERR_NO_FILE => 'aucun fichier reçu',
+            UPLOAD_ERR_NO_TMP_DIR => 'dossier temporaire manquant',
+            UPLOAD_ERR_CANT_WRITE => 'écriture impossible sur le disque',
+            default => 'erreur ' . $code,
+        };
     }
 
     public function delete(array $paths): void
     {
-        $fs = new Filesystem();
         foreach ($paths as $relative) {
-            $absolute = $this->buildAbsolutePath($relative);
+            $absolute = $this->security->resolve($relative);
             if (!$this->security->isPathSafe($absolute)) {
                 throw new \RuntimeException("Chemin non autorisé: $relative");
             }
-            if ($fs->exists($absolute)) {
-                $fs->remove($absolute);
+            if ($this->fs->exists($absolute)) {
+                $this->fs->remove($absolute);
             }
         }
     }
 
     public function rename(string $oldRelative, string $newName): void
     {
-        $oldAbsolute = $this->buildAbsolutePath($oldRelative);
+        $oldAbsolute = $this->security->resolve($oldRelative);
         if (!$this->security->isPathSafe($oldAbsolute)) {
             throw new \RuntimeException('Chemin non autorisé');
         }
@@ -305,43 +282,28 @@ class FileOperationService
         if (file_exists($newAbsolute)) {
             throw new \RuntimeException('Un fichier/dossier existe déjà avec ce nom.');
         }
-        $fs = new Filesystem();
-        $fs->rename($oldAbsolute, $newAbsolute);
+        $this->fs->rename($oldAbsolute, $newAbsolute);
     }
 
     public function paste(array $sourcePaths, string $sourceDir, string $targetDir, string $mode): void
     {
-        $absoluteTarget = $this->buildAbsolutePath($targetDir);
+        $absoluteTarget = $this->security->resolve($targetDir);
         if (!$this->security->isPathSafe($absoluteTarget)) {
             throw new \RuntimeException('Chemin cible non autorisé');
         }
-        $fs = new Filesystem();
         foreach ($sourcePaths as $relative) {
-            $sourceAbsolute = $this->buildAbsolutePath($relative);
+            $sourceAbsolute = $this->security->resolve($relative);
             if (!$this->security->isPathSafe($sourceAbsolute)) {
                 throw new \RuntimeException("Chemin source non autorisé: $relative");
             }
-            $name = basename($relative);
-            $dest = $absoluteTarget . '/' . $name;
-            if ($fs->exists($dest)) {
-                $info = pathinfo($name);
-                $base = $info['filename'];
-                $ext = isset($info['extension']) ? '.' . $info['extension'] : '';
-                $counter = 1;
-                do {
-                    $newName = $base . '_' . $counter . $ext;
-                    $dest = $absoluteTarget . '/' . $newName;
-                    $counter++;
-                } while ($fs->exists($dest));
-            }
-            if ($mode === 'copy') {
-                if (is_dir($sourceAbsolute)) {
-                    $fs->mirror($sourceAbsolute, $dest);
-                } else {
-                    $fs->copy($sourceAbsolute, $dest);
-                }
-            } else { // cut
-                $fs->rename($sourceAbsolute, $dest);
+            $isDir = is_dir($sourceAbsolute);
+            $dest = $absoluteTarget . '/' . $this->uniqueName($absoluteTarget, basename($relative), $isDir);
+            if ($mode !== 'copy') { // cut
+                $this->fs->rename($sourceAbsolute, $dest);
+            } elseif ($isDir) {
+                $this->fs->mirror($sourceAbsolute, $dest);
+            } else {
+                $this->fs->copy($sourceAbsolute, $dest);
             }
         }
     }
@@ -349,7 +311,7 @@ class FileOperationService
     public function download(array $paths): void
     {
         if (count($paths) === 1) {
-            $absolute = $this->buildAbsolutePath($paths[0]);
+            $absolute = $this->security->resolve($paths[0]);
             if (!$this->security->isPathSafe($absolute)) {
                 throw new \RuntimeException('Chemin non autorisé');
             }
@@ -368,7 +330,7 @@ class FileOperationService
         }
 
         foreach ($paths as $relative) {
-            $absolute = $this->buildAbsolutePath($relative);
+            $absolute = $this->security->resolve($relative);
             if (!$this->security->isPathSafe($absolute)) {
                 throw new \RuntimeException("Chemin non autorisé: $relative");
             }
@@ -393,15 +355,24 @@ class FileOperationService
         exit;
     }
 
-    private function buildAbsolutePath(string $relative): string
+    /**
+     * Chemin absolu d'un dossier existant sous la racine.
+     */
+    private function resolveDirectory(string $relative): string
     {
-        $safe = Path::canonicalize($relative);
-        if ($safe === '' || $safe === '.') {
-            return $this->rootPath;
+        $absolute = $this->security->resolve($relative);
+        if (!is_dir($absolute) || !$this->security->isPathSafe($absolute)) {
+            throw new \RuntimeException('Chemin non autorisé');
         }
-        return Path::makeAbsolute($safe, $this->rootPath);
+        return $absolute;
     }
-    
+
+    /** Existe (y compris lien symbolique cassé). */
+    private function exists(string $path): bool
+    {
+        return file_exists($path) || is_link($path);
+    }
+
     public function createDirectory(string $newDirName, string $parentDir): void
     {
         // Normaliser le nom (supprimer les caractères dangereux)
@@ -414,7 +385,7 @@ class FileOperationService
             throw new \RuntimeException('Nom de dossier invalide (caractères interdits).');
         }
         
-        $absoluteParent = $this->buildAbsolutePath($parentDir);
+        $absoluteParent = $this->security->resolve($parentDir);
         if (!$this->security->isPathSafe($absoluteParent)) {
             throw new \RuntimeException('Chemin parent non autorisé');
         }
@@ -427,7 +398,6 @@ class FileOperationService
             throw new \RuntimeException('Un fichier ou dossier existe déjà avec ce nom.');
         }
         
-        $fs = new Filesystem();
-        $fs->mkdir($newPath);
+        $this->fs->mkdir($newPath);
     }
 }
