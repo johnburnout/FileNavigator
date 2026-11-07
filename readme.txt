@@ -4,7 +4,7 @@ Tags: file manager, file browser, upload, download, symfony
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 8.1
-Stable tag: 1.3.2
+Stable tag: 1.3.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Tested up to: 7.1
@@ -112,6 +112,9 @@ Dans le dossier `wp-content/uploads/` ou dans le sous‑dossier spécifié par `
 4. Menus de tri dynamique.
 
 == Changelog ==
+
+= 1.3.3 – 7 novembre 2026 =
+* Mises à jour automatiques activées par défaut ; `define('WPFN_FORCE_AUTO_UPDATE', false);` dans `wp-config.php` pour les désactiver
 
 = 1.3.2 – 7 novembre 2026 =
 * Correction : l'option `show_hidden="true"` affiche désormais les fichiers et dossiers cachés (les dossiers `.git`, `.svn`… restent masqués)

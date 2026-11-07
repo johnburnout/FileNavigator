@@ -14,7 +14,8 @@ namespace WPFN\Updater;
  *
  * Constantes optionnelles (wp-config.php) :
  *  - WPFN_GITHUB_TOKEN        : jeton GitHub (dépôt privé ou limite de requêtes) ;
- *  - WPFN_FORCE_AUTO_UPDATE   : true pour forcer l'installation automatique.
+ *  - WPFN_FORCE_AUTO_UPDATE   : installation automatique des mises à jour,
+ *                               activée par défaut (false pour la désactiver).
  */
 class GitHubUpdater
 {
@@ -261,12 +262,19 @@ class GitHubUpdater
         return $args;
     }
 
+    /**
+     * Mises à jour automatiques activées par défaut ; define('WPFN_FORCE_AUTO_UPDATE', false)
+     * dans wp-config.php rend la main à WordPress (bouton « Activer les mises à jour auto »).
+     */
     public function forceAutoUpdate($update, $item)
     {
-        if (defined('WPFN_FORCE_AUTO_UPDATE') && WPFN_FORCE_AUTO_UPDATE && ($item->plugin ?? '') === $this->basename) {
-            return true;
+        if (($item->plugin ?? '') !== $this->basename) {
+            return $update;
         }
-        return $update;
+        if (defined('WPFN_FORCE_AUTO_UPDATE') && !WPFN_FORCE_AUTO_UPDATE) {
+            return $update;
+        }
+        return true;
     }
 
     public function purgeCache($upgrader, $options): void

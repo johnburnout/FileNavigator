@@ -57,11 +57,11 @@ Le plugin se met à jour depuis les [releases GitHub](https://github.com/johnbur
 
 * WordPress vérifie la dernière release (résultat mis en cache 6 h) et affiche la mise à jour dans **Extensions** et **Tableau de bord → Mises à jour** ;
 * le lien **Vérifier les mises à jour** (sous le nom du plugin) force une vérification immédiate ;
-* le bouton **Activer les mises à jour auto** de la liste des extensions permet l'installation sans intervention.
+* les mises à jour s'installent **automatiquement** (tâche planifiée de WordPress, environ deux fois par jour) ; pour revenir au choix manuel, voir `WPFN_FORCE_AUTO_UPDATE` ci-dessous.
 
 ### Publier une nouvelle version
 
-1. Mettre à jour `Version:` dans `filenavigator.php` et `Stable tag:` dans `readme.txt` (ex. `1.2.0`), ainsi que le changelog.
+1. Mettre à jour `Version:` et `WPFN_VERSION` dans `filenavigator.php` et `Stable tag:` dans `readme.txt` (ex. `1.2.0`), ainsi que le changelog.
    Rédiger le descriptif de la release dans `.github/release-notes/vX.Y.Z.md` : il est repris automatiquement par le workflow (suivi de la liste des commits).
 2. Committer, puis créer et pousser le tag :
    ```bash
@@ -76,7 +76,7 @@ Le plugin se met à jour depuis les [releases GitHub](https://github.com/johnbur
 
 ```php
 define('WPFN_GITHUB_TOKEN', 'ghp_xxx');    // dépôt privé ou limite de l'API GitHub (60 req/h sans jeton)
-define('WPFN_FORCE_AUTO_UPDATE', true);    // forcer l'installation automatique
+define('WPFN_FORCE_AUTO_UPDATE', false);   // désactiver l'installation automatique (activée par défaut)
 ```
 
 ## 🧩 Utilisation de la shortcode
@@ -228,6 +228,9 @@ Les erreurs apparaîtront dans `wp-content/debug.log`.
 ---
 
 ## 📝 Changelog
+
+### 1.3.3 – 7 novembre 2026
+- Mises à jour automatiques **activées par défaut** : les nouvelles versions s'installent sans intervention. `define('WPFN_FORCE_AUTO_UPDATE', false);` dans `wp-config.php` rétablit le choix manuel
 
 ### 1.3.2 – 7 novembre 2026
 - Correction : l’option `show_hidden="true"` affiche désormais les fichiers et dossiers cachés (les dossiers de versionnage `.git`, `.svn`… restent masqués)
