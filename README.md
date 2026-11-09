@@ -277,6 +277,11 @@ Les erreurs apparaîtront dans `wp-content/debug.log`.
 
 ## 📝 Changelog
 
+### 1.3.7 – 9 novembre 2026
+- Correction : une mise à jour pouvait échouer (« paquet de mise à jour inconnu ») si l'API GitHub était momentanément indisponible ; la signature est désormais trouvée sans appel à l'API
+- Correction : le cache des releases n'est plus vidé lors de la mise à jour d'une autre extension
+- Messages d'erreur de mise à jour plus précis (signature introuvable, non téléchargeable ou invalide)
+
 ### 1.3.6 – 9 novembre 2026
 - Nouveau : bouton 🔗 à côté de chaque fichier pour copier son lien de téléchargement (visible seulement si le téléchargement est autorisé)
 

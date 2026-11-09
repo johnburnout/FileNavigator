@@ -4,7 +4,7 @@ Tags: file manager, file browser, upload, download, symfony
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.3.6
+Stable tag: 1.3.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -124,6 +124,11 @@ Dans le dossier `wp-content/uploads/` ou dans le sous‑dossier spécifié par `
 4. Menus de tri dynamique.
 
 == Changelog ==
+
+= 1.3.7 – 9 novembre 2026 =
+* Correction : une mise à jour pouvait échouer (« paquet de mise à jour inconnu ») si l'API GitHub était momentanément indisponible ; la signature est désormais trouvée sans appel à l'API
+* Correction : le cache des releases n'est plus vidé lors de la mise à jour d'une autre extension
+* Messages d'erreur de mise à jour plus précis (signature introuvable, non téléchargeable ou invalide)
 
 = 1.3.6 – 9 novembre 2026 =
 * Nouveau : bouton 🔗 à côté de chaque fichier pour copier son lien de téléchargement (visible seulement si le téléchargement est autorisé)

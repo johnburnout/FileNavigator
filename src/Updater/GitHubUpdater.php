@@ -238,39 +238,72 @@ class GitHubUpdater
 
     /**
      * Télécharge le paquet et vérifie sa signature avant que WordPress ne l'installe.
-     * Toute erreur (signature absente, invalide, réseau) annule la mise à jour.
+     * Toute erreur (signature introuvable, invalide, réseau) annule la mise à jour.
      */
     public function verifiedDownload($reply, $package, $upgrader = null, $hookExtra = [])
     {
-        if ($reply !== false) {
+        if ($reply !== false || !is_string($package)) {
             return $reply;
         }
-        $release = $this->getRelease();
-        if (($release['package'] ?? '') !== $package) {
-            $release = $this->getRelease(true); // cache périmé ?
+        $ours = ($hookExtra['plugin'] ?? '') === $this->basename || $this->isOurPackageUrl($package);
+        if (!$ours) {
+            return $reply;
         }
-        $ours = ($hookExtra['plugin'] ?? '') === $this->basename;
-        if (($release['package'] ?? '') !== $package) {
-            // Paquet inconnu : s'il vise ce plugin, on refuse ; sinon ce n'est pas notre affaire.
-            return $ours
-                ? new \WP_Error('wpfn_unknown_package', 'File Navigator : paquet de mise à jour inconnu, installation annulée.')
-                : $reply;
+        if (!preg_match('#^https://#i', $package)) {
+            // Fichier local (archive téléversée à la main) : vérifié par l'administrateur lui-même
+            return $reply;
         }
+
+        $signatureUrl = $this->signatureUrl($package);
+        if ($signatureUrl === null) {
+            return new \WP_Error('wpfn_unknown_package', 'File Navigator : impossible de trouver la signature de ce paquet (API GitHub indisponible ?). Réessayez plus tard.');
+        }
+
+        $response = wp_remote_get($signatureUrl, ['timeout' => 15]);
+        if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
+            return new \WP_Error('wpfn_signature_unavailable', 'File Navigator : la signature du paquet n\'a pas pu être téléchargée. Réessayez plus tard.');
+        }
+        $signature = base64_decode(trim((string) wp_remote_retrieve_body($response)), true);
 
         $file = download_url($package);
         if (is_wp_error($file)) {
             return $file;
         }
-        $response = wp_remote_get($release['signature'], ['timeout' => 15]);
-        $signature = is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200
-            ? false
-            : base64_decode(trim(wp_remote_retrieve_body($response)), true);
-
         if (!self::verifySignature((string) file_get_contents($file), $signature ?: '')) {
             @unlink($file);
-            return new \WP_Error('wpfn_bad_signature', 'File Navigator : la signature du paquet de mise à jour est absente ou invalide, installation annulée.');
+            return new \WP_Error('wpfn_bad_signature', 'File Navigator : la signature du paquet de mise à jour est invalide, installation annulée.');
         }
         return $file;
+    }
+
+    /**
+     * URL de la signature d'un paquet, sans dépendre de l'API GitHub quand c'est possible :
+     *  1. dépôt public : l'URL du paquet suivie de « .sig » (même release, même dossier) ;
+     *  2. dépôt privé : la release en cache, puis redemandée à l'API (URL d'asset de l'API).
+     * L'URL ne sert qu'à localiser la signature : c'est sa vérification qui protège.
+     */
+    private function signatureUrl(string $package): ?string
+    {
+        if (str_starts_with($package, $this->publicDownloadPrefix()) && str_ends_with($package, '/' . $this->assetName)) {
+            return $package . '.sig';
+        }
+        $release = $this->getRelease();
+        if (($release['package'] ?? '') === $package) {
+            return $release['signature'];
+        }
+        $release = $this->getRelease(true);
+        return ($release['package'] ?? '') === $package ? $release['signature'] : null;
+    }
+
+    private function publicDownloadPrefix(): string
+    {
+        return sprintf('https://github.com/%s/%s/releases/download/', $this->owner, $this->repo);
+    }
+
+    private function isOurPackageUrl(string $url): bool
+    {
+        return str_starts_with($url, $this->publicDownloadPrefix())
+            || str_starts_with($url, sprintf('https://api.github.com/repos/%s/%s/releases/assets/', $this->owner, $this->repo));
     }
 
     /** Signature Ed25519 détachée de $data, vérifiée avec PUBLIC_KEY (ou $publicKey, en base64, pour les tests). */
@@ -335,9 +368,11 @@ class GitHubUpdater
         return true;
     }
 
+    /** Vide le cache uniquement après une mise à jour de ce plugin (pas des autres). */
     public function purgeCache($upgrader, $options): void
     {
-        if (($options['type'] ?? '') === 'plugin') {
+        $plugins = (array) ($options['plugins'] ?? (isset($options['plugin']) ? [$options['plugin']] : []));
+        if (($options['type'] ?? '') === 'plugin' && in_array($this->basename, $plugins, true)) {
             delete_site_transient(self::CACHE_KEY);
         }
     }
