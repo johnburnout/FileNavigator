@@ -311,12 +311,7 @@ class FileOperationService
                 throw new \RuntimeException('Chemin non autorisé');
             }
             if (is_file($absolute)) {
-                $name = basename($paths[0]);
-                // Repli ASCII sans guillemets/contrôles + forme RFC 5987 pour les noms UTF-8
-                $fallback = preg_replace('/[^\x20-\x7E]|["\\\\]/', '_', $name);
-                header('Content-Type: application/octet-stream');
-                header('Content-Disposition: attachment; filename="' . $fallback . '"; filename*=UTF-8\'\'' . rawurlencode($name));
-                readfile($absolute);
+                $this->sendFile(realpath($absolute), basename($paths[0]), 'application/octet-stream');
                 exit;
             }
         }
@@ -369,11 +364,72 @@ class FileOperationService
         }
         $zip->close();
 
-        header('Content-Type: application/zip');
-        header('Content-Disposition: attachment; filename="download.zip"');
-        readfile($tempFile);
+        // Archive temporaire : toujours envoyée par PHP (le serveur web la lirait après sa suppression)
+        $this->sendFile($tempFile, 'download.zip', 'application/zip', false);
         unlink($tempFile);
         exit;
+    }
+
+    /**
+     * Envoie un fichier au navigateur.
+     * Par défaut PHP le transmet lui-même, sans le charger en mémoire (tampons de sortie vidés).
+     * Avec WPFN_SENDFILE dans wp-config.php, le serveur web s'en charge (gros fichiers) :
+     *  - 'x-sendfile'       : Apache (mod_xsendfile) ou LiteSpeed ;
+     *  - 'x-accel-redirect' : Nginx, avec WPFN_ACCEL_MAP = ['/chemin/disque/' => '/uri-interne/'].
+     */
+    private function sendFile(string $path, string $downloadName, string $contentType, bool $allowOffload = true): void
+    {
+        $headers = self::downloadHeaders(
+            $path,
+            $downloadName,
+            $contentType,
+            $allowOffload && defined('WPFN_SENDFILE') ? (string) WPFN_SENDFILE : '',
+            defined('WPFN_ACCEL_MAP') ? (array) WPFN_ACCEL_MAP : []
+        );
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        foreach ($headers as $name => $value) {
+            header($name . ': ' . $value);
+        }
+        if (!isset($headers['X-Sendfile']) && !isset($headers['X-Accel-Redirect'])) {
+            @set_time_limit(0);
+            readfile($path);
+        }
+    }
+
+    /**
+     * En-têtes de téléchargement. Si le délestage vers le serveur web est demandé mais impossible
+     * (chemin absent de WPFN_ACCEL_MAP, mode inconnu), PHP envoie lui-même le fichier.
+     * @return array<string, string>
+     */
+    public static function downloadHeaders(string $path, string $downloadName, string $contentType, string $mode = '', array $accelMap = []): array
+    {
+        // Repli ASCII sans guillemets/contrôles + forme RFC 5987 pour les noms UTF-8
+        $fallback = preg_replace('/[^\x20-\x7E]|["\\\\]/', '_', $downloadName);
+        $headers = [
+            'Content-Type'           => $contentType,
+            'Content-Disposition'    => 'attachment; filename="' . $fallback . '"; filename*=UTF-8\'\'' . rawurlencode($downloadName),
+            'X-Content-Type-Options' => 'nosniff',
+        ];
+
+        if ($mode === 'x-sendfile') {
+            $headers['X-Sendfile'] = $path;
+            return $headers;
+        }
+        if ($mode === 'x-accel-redirect') {
+            foreach ($accelMap as $prefix => $uri) {
+                $prefix = rtrim((string) $prefix, '/') . '/';
+                if (str_starts_with($path, $prefix)) {
+                    $relative = substr($path, strlen($prefix));
+                    $headers['X-Accel-Redirect'] = rtrim((string) $uri, '/') . '/'
+                        . implode('/', array_map('rawurlencode', explode('/', $relative)));
+                    return $headers;
+                }
+            }
+        }
+        $headers['Content-Length'] = (string) filesize($path);
+        return $headers;
     }
 
     /**

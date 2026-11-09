@@ -67,3 +67,16 @@ function download_url(string $url)
     file_put_contents($file, $r['body']);
     return $file;
 }
+
+// Rendu du shortcode (Twig + fonctions WordPress utilisées par le template)
+function shortcode_atts(array $defaults, $atts, string $shortcode = ''): array { return array_merge($defaults, (array) $atts); }
+function current_user_can(string $cap): bool { return $GLOBALS['wpfn_test']['logged_in']; }
+function admin_url(string $path = ''): string { return 'https://example.test/wp-admin/' . $path; }
+function wp_create_nonce($action = -1): string { return 'nonce-de-test'; }
+function wp_max_upload_size(): int { return 8 * MB_IN_BYTES; }
+function get_allowed_mime_types(): array { return ['txt' => 'text/plain', 'pdf' => 'application/pdf', 'png' => 'image/png']; }
+function esc_url($url): string { return (string) $url; }
+function esc_attr($s): string { return htmlspecialchars((string) $s, ENT_QUOTES); }
+function add_query_arg($key, $value): string { return '?' . $key . '=' . urlencode((string) $value); }
+function date_i18n(string $format, $timestamp): string { return date($format, (int) $timestamp); }
+function get_option(string $name, $default = false) { return $default; }

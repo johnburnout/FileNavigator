@@ -4,7 +4,7 @@ Tags: file manager, file browser, upload, download, symfony
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.3.7
+Stable tag: 1.3.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -124,6 +124,13 @@ Dans le dossier `wp-content/uploads/` ou dans le sous‑dossier spécifié par `
 4. Menus de tri dynamique.
 
 == Changelog ==
+
+= 1.3.8 – 9 novembre 2026 =
+* Sans droit de téléchargement, le nom des fichiers s'affiche sans lien (plus d'erreur 403 au clic) et les miniatures non publiques sont remplacées par une icône
+* Gros fichiers : envoi sans chargement en mémoire (`Content-Length`, tampons vidés) ; option X-Sendfile / X-Accel-Redirect via `WPFN_SENDFILE` dans `wp-config.php`
+* Dossier courant normalisé proprement (les noms contenant « .. », comme « v1..2 », ne sont plus déformés)
+* Correction : « Renommer » masque aussi le nom des fichiers pendant la saisie
+* Documentation : signature des mises à jour et procédure de rotation de la clé (`WPFN_KEY_ROTATION`)
 
 = 1.3.7 – 9 novembre 2026 =
 * Correction : une mise à jour pouvait échouer (« paquet de mise à jour inconnu ») si l'API GitHub était momentanément indisponible ; la signature est désormais trouvée sans appel à l'API

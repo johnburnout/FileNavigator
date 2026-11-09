@@ -127,6 +127,10 @@
 .WPFN-item.is-dir .WPFN-item-name {
     font-weight: bold;
 }
+.WPFN-item-nolink {
+    color: inherit;
+    cursor: default;
+}
 
 /* --- Taille et date --- */
 .WPFN-copy-link {

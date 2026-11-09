@@ -72,8 +72,7 @@ class FileNavigatorShortcode
         }
         $rootRel = RootSignature::relative($rootPath);
 
-        $currentDir = self::query('fb_dir' . $suffix) ?? '';
-        $currentDir = str_replace('..', '', $currentDir);
+        $currentDir = self::normalizeDir(self::query('fb_dir' . $suffix) ?? '');
 
         $extensions = array_map('trim', explode(',', $atts['extensions']));
         $extensions = array_filter($extensions);
@@ -149,6 +148,22 @@ class FileNavigatorShortcode
         }
         $real = realpath($rootParam);
         return $real !== false && is_dir($real) && RootSignature::isAllowed($real) ? $real : '';
+    }
+
+    /**
+     * Dossier courant normalisé (« a/./b/../c » → « a/c ») ; '' (racine) s'il sort de la racine.
+     * Simple confort d'affichage : SecurityChecker reste le contrôle d'accès.
+     */
+    private static function normalizeDir(string $dir): string
+    {
+        if (str_contains($dir, '://')) {
+            return '';
+        }
+        $dir = \Symfony\Component\Filesystem\Path::canonicalize($dir);
+        if ($dir === '.' || $dir === '..' || str_starts_with($dir, '../') || str_starts_with($dir, '/')) {
+            return '';
+        }
+        return $dir;
     }
 
     /** URL publique d'un fichier situé dans wp-content/uploads, sinon ''. */

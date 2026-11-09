@@ -90,31 +90,39 @@
                     {# Fichier #}
                     {% set ext = item.name|split('.')|last|lower %}
                     {% set download_url = ajax_url ~ '?action=WPFN_download&paths=' ~ ([item.relative]|json_encode|url_encode) ~ '&root=' ~ (root_rel|url_encode) ~ '&root_sig=' ~ root_sig ~ '&root_pd=' ~ root_pd %}
-                    {% set file_url = item.relative|WPFN_file_url(root_path) ?: download_url %}
+                    {# Miniature : URL publique d'uploads, sinon lien de téléchargement s'il est autorisé #}
+                    {% set file_url = item.relative|WPFN_file_url(root_path) ?: (permissions.can_download ? download_url : '') %}
                     
                     <span class="WPFN-item-content">
-                        {% if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                        {% if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] and file_url %}
                             <span class="WPFN-thumbnail-wrapper">
                                 <img src="{{ file_url }}" alt="{{ item.name }}" class="WPFN-thumbnail">
                                 <span class="WPFN-thumbnail-zoom">
                                     <img src="{{ file_url }}" alt="Aperçu">
                                 </span>
                             </span>
+                        {% elseif ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] %}
+                            <span class="WPFN-item-icon">🖼️</span>
                         {% elseif ext == 'pdf' %}
                             <span class="WPFN-item-icon WPFN-pdf-icon">📑</span>
                         {% else %}
                             <span class="WPFN-item-icon">📄</span>
                         {% endif %}
-                        <a href="{{ download_url }}" 
-                            class="WPFN-item-link" 
-                            target="_blank">
-                            {{ item.name|e }}
-                        </a>
                         {% if permissions.can_download %}
+                            <a href="{{ download_url }}" 
+                                class="WPFN-item-link" 
+                                target="_blank">
+                                <span class="WPFN-item-name">{{ item.name|e }}</span>
+                            </a>
                             <button type="button" class="WPFN-copy-link"
                                     data-url="{{ download_url }}"
                                     title="Copier le lien de téléchargement"
                                     aria-label="Copier le lien de téléchargement de {{ item.name }}">🔗</button>
+                        {% else %}
+                            {# Téléchargement non autorisé : nom sans lien (le lien renverrait une erreur 403) #}
+                            <span class="WPFN-item-link WPFN-item-nolink" title="Connectez-vous pour télécharger ce fichier">
+                                <span class="WPFN-item-name">{{ item.name|e }}</span>
+                            </span>
                         {% endif %}
                     </span>
                     <span class="WPFN-item-size">({{ item.size|size_format }})</span>

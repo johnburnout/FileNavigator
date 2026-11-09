@@ -57,7 +57,8 @@ Le plugin se met à jour depuis les [releases GitHub](https://github.com/johnbur
 
 * WordPress vérifie la dernière release (résultat mis en cache 6 h) et affiche la mise à jour dans **Extensions** et **Tableau de bord → Mises à jour** ;
 * le lien **Vérifier les mises à jour** (sous le nom du plugin) force une vérification immédiate ;
-* les mises à jour s'installent **automatiquement** (tâche planifiée de WordPress, environ deux fois par jour) ; pour revenir au choix manuel, voir `WPFN_FORCE_AUTO_UPDATE` ci-dessous.
+* les mises à jour s'installent **automatiquement** (tâche planifiée de WordPress, environ deux fois par jour) ; pour revenir au choix manuel, voir `WPFN_FORCE_AUTO_UPDATE` ci-dessous ;
+* chaque paquet est **signé** : le plugin vérifie la signature avant toute installation et refuse un paquet non signé ou modifié, même s'il provient du dépôt GitHub officiel (voir « Signature des mises à jour »). Les administrateurs qui préfèrent relire chaque version avant de l'installer peuvent désactiver l'installation automatique.
 
 ### Publier une nouvelle version
 
@@ -83,6 +84,24 @@ Chaque paquet est signé (Ed25519) avec une clé privée qui ne quitte jamais la
 
 * **Sauvegardez la clé privée** hors de cette machine (gestionnaire de mots de passe, support chiffré). Perdue, elle ne peut pas être recréée : les sites ne pourraient plus être mis à jour automatiquement et devraient installer à la main une version contenant une nouvelle clé publique.
 * Nouvelle paire de clés : `php bin/release-keygen.php`, puis recopier la clé publique affichée dans `GitHubUpdater::PUBLIC_KEY`.
+
+#### Rotation de la clé
+
+Les sites installés ne font confiance qu'à la clé publique de leur version. Changer de clé passe donc par une **version de transition** : elle contient la nouvelle clé publique, mais elle est signée avec l'ancienne.
+
+1. Générer la nouvelle paire **sans écraser l'ancienne** :
+   ```bash
+   php bin/release-keygen.php ~/.config/filenavigator/release-signing-2.key
+   ```
+2. Recopier la nouvelle clé publique dans `GitHubUpdater::PUBLIC_KEY`, publier la version (tag), puis la signer avec **l'ancienne** clé :
+   ```bash
+   WPFN_KEY_ROTATION=1 bin/sign-release.sh vX.Y.Z
+   ```
+3. Une fois les sites passés à cette version, signer les suivantes avec la nouvelle clé (`WPFN_SIGNING_KEY=~/.config/filenavigator/release-signing-2.key`, ou la renommer en `release-signing.key`), puis supprimer l'ancienne.
+
+**Clé privée compromise :** la personne qui la détient peut signer des paquets acceptés par les sites. Il faut faire la rotation au plus vite : la version de transition retire sa confiance à l'ancienne clé. Comme une signature ne protège plus rien dans ce cas, il faut aussi sécuriser le compte GitHub (mot de passe, double authentification, jetons). Prévenez les administrateurs : ils peuvent suspendre les mises à jour avec `define('WPFN_FORCE_AUTO_UPDATE', false);` puis installer la version de transition à la main.
+
+**Clé privée perdue :** aucune version signée ne peut plus être produite. Les sites doivent installer à la main une version qui contient une nouvelle clé publique.
 
 ### Options (`wp-config.php`)
 
@@ -169,6 +188,22 @@ add_filter('WPFN_zip_limits', function (array $limits, bool $loggedIn) {
         : ['max_size' => 100 * MB_IN_BYTES, 'max_files' => 500];
 }, 10, 2);
 ```
+
+### Gros fichiers : envoi par le serveur web
+
+Par défaut, PHP transmet lui-même les fichiers téléchargés, sans les charger en mémoire. Pour de très gros fichiers, le serveur web peut s'en charger et libérer PHP immédiatement. À n'activer que si le serveur est configuré, sinon les fichiers téléchargés seraient vides :
+
+```php
+// Apache (mod_xsendfile, avec XSendFilePath autorisant le dossier uploads) ou LiteSpeed
+define('WPFN_SENDFILE', 'x-sendfile');
+
+// Nginx : correspondance chemin disque => location interne
+define('WPFN_SENDFILE', 'x-accel-redirect');
+define('WPFN_ACCEL_MAP', ['/var/www/site/wp-content/uploads/' => '/wpfn-uploads/']);
+// location /wpfn-uploads/ { internal; alias /var/www/site/wp-content/uploads/; }
+```
+
+Les archives ZIP sont toujours envoyées par PHP.
 
 ---
 
@@ -276,6 +311,13 @@ Les erreurs apparaîtront dans `wp-content/debug.log`.
 ---
 
 ## 📝 Changelog
+
+### 1.3.8 – 9 novembre 2026
+- Sans droit de téléchargement, le nom des fichiers s'affiche sans lien (plus d'erreur 403 au clic) et les miniatures non publiques sont remplacées par une icône
+- Gros fichiers : envoi sans chargement en mémoire (`Content-Length`, tampons vidés) ; option X-Sendfile / X-Accel-Redirect via `WPFN_SENDFILE` dans `wp-config.php`
+- Dossier courant normalisé proprement (les noms contenant « .. », comme « v1..2 », ne sont plus déformés)
+- Correction : « Renommer » masque aussi le nom des fichiers pendant la saisie
+- Documentation : signature des mises à jour et procédure de rotation de la clé (`WPFN_KEY_ROTATION`)
 
 ### 1.3.7 – 9 novembre 2026
 - Correction : une mise à jour pouvait échouer (« paquet de mise à jour inconnu ») si l'API GitHub était momentanément indisponible ; la signature est désormais trouvée sans appel à l'API
