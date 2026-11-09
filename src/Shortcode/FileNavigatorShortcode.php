@@ -66,8 +66,8 @@ class FileNavigatorShortcode
         $atts['order'] = isset($_GET['order']) ? sanitize_text_field($_GET['order']) : $atts['order'];
 
         $rootPath = self::getRootPath($atts['root']);
-        if (!$rootPath || !is_dir($rootPath)) {
-            return '<p style="color:red;">Erreur : dossier racine invalide.</p>';
+        if ($rootPath === '') {
+            return '<p style="color:red;">Erreur : dossier racine invalide (il doit exister et se trouver dans wp-content/uploads).</p>';
         }
 
         $currentDir = isset($_GET['fb_dir']) ? sanitize_text_field($_GET['fb_dir']) : '';
@@ -132,31 +132,21 @@ class FileNavigatorShortcode
         }
     }
 
+    /**
+     * Chemin réel du dossier racine, ou '' s'il n'existe pas ou sort de la base autorisée
+     * (wp-content/uploads par défaut, filtre « WPFN_root_base »).
+     * « root » est relatif à cette base ; un chemin absolu n'est accepté que s'il s'y trouve.
+     */
     private static function getRootPath(string $rootParam): string
     {
-        $upload_dir = wp_upload_dir();
-        $base = realpath($upload_dir['basedir']) ?: $upload_dir['basedir'];
-
-        if (empty($rootParam)) {
-            return $base;
-        }
-
-        if (strpos($rootParam, '/') === 0) {
-            return realpath($rootParam) ?: $rootParam;
-        }
-
-        $path = $base . '/' . ltrim($rootParam, '/');
+        $base = \WPFN\FileNavigator\RootSignature::allowedBase();
+        $path = str_starts_with($rootParam, '/') ? $rootParam : $base . '/' . $rootParam;
         $real = realpath($path);
-        if ($real !== false && (is_dir($real) || is_file($real))) {
-            return $real;
-        }
 
-        $fallback = ABSPATH . ltrim($rootParam, '/');
-        if (is_dir($fallback) || is_file($fallback)) {
-            return $fallback;
+        if ($real === false || !is_dir($real) || !\WPFN\FileNavigator\RootSignature::isAllowed($real)) {
+            return '';
         }
-
-        return $path;
+        return $real;
     }
 
     private static function buildBreadcrumb(string $root, string $currentRelative): array

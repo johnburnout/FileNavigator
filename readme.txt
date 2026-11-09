@@ -4,7 +4,7 @@ Tags: file manager, file browser, upload, download, symfony
 Requires at least: 5.8
 Tested up to: 6.6
 Requires PHP: 8.1
-Stable tag: 1.3.3
+Stable tag: 1.3.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Tested up to: 7.1
@@ -35,7 +35,7 @@ A powerful file manager for WordPress, powered by Symfony Finder and Twig.
 
 | Parameter | Description | Possible values | Default |
 |-----------|-------------|-----------------|---------|
-| `root` | Directory to browse (relative to `wp-content/uploads` or absolute path) | `downloads`, `/absolute/path` | uploads |
+| `root` | Directory to browse, relative to `wp-content/uploads` (an absolute path is accepted only if it is inside `uploads`; see the `WPFN_root_base` filter) | `downloads`, `clients/2026` | uploads |
 | `extensions` | Allowed file extensions (comma-separated) | `jpg,png,pdf` | (all) |
 | `sort` | Sorting criteria | `name`, `size`, `mtime` | `name` |
 | `order` | Sort order | `asc`, `desc` | `asc` |
@@ -59,9 +59,13 @@ Date displayed as `DD/MM/YYYY HH:MM`.
 
 Browse `uploads/downloads`, show only JPG, PNG, and PDF files.
 
-`[filenavigator root="/home/site/public_html/documents" sort="mtime" order="desc"]`
+`[filenavigator root="documents" sort="mtime" order="desc"]`
 
-Absolute path, sort by modification date (newest first).
+Folder `uploads/documents`, sort by modification date (newest first).
+
+To allow another base folder (for example a dedicated folder outside `uploads`), add to your theme or a mu-plugin:
+
+`add_filter('WPFN_root_base', fn() => '/home/site/documents');`
 
 `[filenavigator public_download="false"]`
 
@@ -112,6 +116,13 @@ Dans le dossier `wp-content/uploads/` ou dans le sous‑dossier spécifié par `
 4. Menus de tri dynamique.
 
 == Changelog ==
+
+= 1.3.4 – 9 novembre 2026 =
+* Sécurité : l'attribut `root` est désormais confiné à `wp-content/uploads` (chemins absolus hors de ce dossier, `../` et liens symboliques refusés). **Changement incompatible** : pour un autre dossier, utiliser le filtre `WPFN_root_base`
+* Sécurité : correction d'une faille XSS dans les messages d'erreur du téléchargement
+* Sécurité : nom de fichier assaini dans l'en-tête `Content-Disposition` (prise en charge des noms UTF-8)
+* Correction : plus d'erreur 500 lorsqu'un paramètre est envoyé sous forme de tableau
+* Correction : message clair si l'extension PHP `zip` est absente
 
 = 1.3.3 – 7 novembre 2026 =
 * Mises à jour automatiques activées par défaut ; `define('WPFN_FORCE_AUTO_UPDATE', false);` dans `wp-config.php` pour les désactiver

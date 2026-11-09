@@ -316,13 +316,19 @@ class FileOperationService
                 throw new \RuntimeException('Chemin non autorisé');
             }
             if (is_file($absolute)) {
+                $name = basename($paths[0]);
+                // Repli ASCII sans guillemets/contrôles + forme RFC 5987 pour les noms UTF-8
+                $fallback = preg_replace('/[^\x20-\x7E]|["\\\\]/', '_', $name);
                 header('Content-Type: application/octet-stream');
-                header('Content-Disposition: attachment; filename="' . basename($paths[0]) . '"');
+                header('Content-Disposition: attachment; filename="' . $fallback . '"; filename*=UTF-8\'\'' . rawurlencode($name));
                 readfile($absolute);
                 exit;
             }
         }
 
+        if (!class_exists(\ZipArchive::class)) {
+            throw new \RuntimeException('Le téléchargement groupé nécessite l\'extension PHP « zip », absente sur ce serveur.');
+        }
         $zip = new \ZipArchive();
         $tempFile = tempnam(sys_get_temp_dir(), 'WPFN_');
         if ($zip->open($tempFile, \ZipArchive::CREATE) !== true) {

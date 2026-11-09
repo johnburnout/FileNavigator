@@ -73,7 +73,8 @@ final class AjaxController
     public static function download(): void
     {
         // Pas de nonce ni de capacité : lien direct, ouvert aux visiteurs si public_download
-        $paths = self::json('paths', $_GET) ?? [];
+        // Seuls les chemins de type chaîne sont retenus (évite un TypeError sur entrée forgée)
+        $paths = array_values(array_filter(self::json('paths', $_GET) ?? [], 'is_string'));
         if (empty($paths)) {
             wp_die('Aucun fichier sélectionné.');
         }
@@ -86,7 +87,7 @@ final class AjaxController
         try {
             (new FileOperationService($root))->download($paths);
         } catch (\Exception $e) {
-            wp_die($e->getMessage());
+            wp_die(esc_html($e->getMessage()));
         }
     }
 
@@ -180,9 +181,9 @@ final class AjaxController
     private static function root(bool $json = true): array
     {
         $src = $json ? $_POST : $_GET;
-        $root = isset($src['root']) ? (string) wp_unslash($src['root']) : '';
-        $sig = isset($src['root_sig']) ? (string) wp_unslash($src['root_sig']) : '';
-        $publicDownload = isset($src['root_pd']) && (string) $src['root_pd'] === '1';
+        $root = isset($src['root']) && is_string($src['root']) ? wp_unslash($src['root']) : '';
+        $sig = isset($src['root_sig']) && is_string($src['root_sig']) ? wp_unslash($src['root_sig']) : '';
+        $publicDownload = isset($src['root_pd']) && $src['root_pd'] === '1';
 
         if ($root === '') {
             return [wp_upload_dir()['basedir'], false];
@@ -205,14 +206,15 @@ final class AjaxController
     /** Champ texte de $_POST, déséchappé et nettoyé ('' si absent). */
     private static function text(string $key): string
     {
-        return isset($_POST[$key]) ? sanitize_text_field(wp_unslash($_POST[$key])) : '';
+        // Un paramètre envoyé en tableau (key[]=...) est ignoré
+        return isset($_POST[$key]) && is_string($_POST[$key]) ? sanitize_text_field(wp_unslash($_POST[$key])) : '';
     }
 
     /** Champ JSON (tableau) de $_POST ou de $src ; null si absent ou invalide. */
     private static function json(string $key, ?array $src = null): ?array
     {
         $src ??= $_POST;
-        if (!isset($src[$key])) {
+        if (!isset($src[$key]) || !is_string($src[$key])) {
             return null;
         }
         $value = json_decode(wp_unslash($src[$key]), true);

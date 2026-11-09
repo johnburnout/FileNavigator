@@ -87,7 +87,7 @@ Insérez la shortcode `[filenavigator]` dans n’importe quelle page ou article.
 
 | Paramètre | Description | Valeurs possibles | Défaut |
 |:---|:---|:---|:---|
-| `root` | Dossier à explorer (relatif à `wp-content/uploads` ou chemin absolu) | `downloads`, `/chemin/absolu` | uploads |
+| `root` | Dossier à explorer, relatif à `wp-content/uploads` (un chemin absolu n’est accepté que s’il se trouve dans `uploads` ; voir le filtre `WPFN_root_base`) | `downloads`, `clients/2026` | uploads |
 | `extensions` | Extensions autorisées (séparées par des virgules) | `jpg,png,pdf` | (toutes) |
 | `sort` | Critère de tri (modifiable dynamiquement via l’interface) | `name`, `size`, `mtime` | `name` |
 | `order` | Ordre de tri (modifiable dynamiquement via l’interface) | `asc`, `desc` | `asc` |
@@ -124,9 +124,17 @@ Date affichée en `JJ/MM/AAAA HH:MM`.
 Explorer le dossier `uploads/downloads`, afficher uniquement les fichiers JPG, PNG et PDF.
 
 ```text
-[filenavigator root="/home/site/public_html/documents" sort="mtime" order="desc"]
+[filenavigator root="documents" sort="mtime" order="desc"]
 ```
-Dossier absolu, tri par date de modification du plus récent au plus ancien.
+Dossier `uploads/documents`, tri par date de modification du plus récent au plus ancien.
+
+### Dossier de base autorisé
+
+Pour des raisons de sécurité, `root` est toujours confiné à `wp-content/uploads` : un chemin qui en sort (`../..`, `/`, lien symbolique…) est refusé. Pour autoriser une autre base, ajoutez dans votre thème ou un mu-plugin :
+
+```php
+add_filter('WPFN_root_base', fn() => '/home/site/documents');
+```
 
 ```text
 [filenavigator public_download="false"]
@@ -228,6 +236,13 @@ Les erreurs apparaîtront dans `wp-content/debug.log`.
 ---
 
 ## 📝 Changelog
+
+### 1.3.4 – 9 novembre 2026
+- **Sécurité** : l’attribut `root` est désormais confiné à `wp-content/uploads` (chemins absolus hors de ce dossier, `../` et liens symboliques refusés). **Changement incompatible** : pour un autre dossier, utiliser le filtre `WPFN_root_base` (voir « Dossier de base autorisé »)
+- Sécurité : correction d’une faille XSS dans les messages d’erreur du téléchargement
+- Sécurité : nom de fichier assaini dans l’en-tête `Content-Disposition` (prise en charge des noms UTF-8)
+- Correction : plus d’erreur 500 lorsqu’un paramètre est envoyé sous forme de tableau
+- Correction : message clair si l’extension PHP `zip` est absente
 
 ### 1.3.3 – 7 novembre 2026
 - Mises à jour automatiques **activées par défaut** : les nouvelles versions s'installent sans intervention. `define('WPFN_FORCE_AUTO_UPDATE', false);` dans `wp-config.php` rétablit le choix manuel
