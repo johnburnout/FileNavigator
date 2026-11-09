@@ -80,6 +80,23 @@
             $(document).trigger('WPFN:clipboard');
         },
 
+        // Copie un texte dans le presse-papiers du système (API Clipboard, sinon execCommand)
+        copyText: function(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                return navigator.clipboard.writeText(text);
+            }
+            return new Promise(function(resolve, reject) {
+                const $ta = $('<textarea readonly></textarea>').val(text)
+                    .css({ position: 'fixed', top: 0, left: 0, opacity: 0 })
+                    .appendTo(document.body);
+                $ta[0].select();
+                let ok = false;
+                try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+                $ta.remove();
+                ok ? resolve() : reject(new Error('copie impossible'));
+            });
+        },
+
         // Récupère les chemins sélectionnés
         getSelectedPaths: function() {
             return this.container.find('.WPFN-item-checkbox:checked').map(function() {
@@ -585,6 +602,18 @@
                     '&root_pd=' + encodeURIComponent(self.rootPd);
                 window.open(url, '_blank');
                 self.setStatus('Téléchargement en cours...');
+            });
+
+            // ---------- COPIER LE LIEN D'UN FICHIER ----------
+            $c.on('click', '.WPFN-copy-link', function(e) {
+                e.preventDefault();
+                const url = new URL($(this).attr('data-url'), window.location.href).href;
+                self.copyText(url)
+                    .then(function() { self.setStatus('Lien de téléchargement copié.'); })
+                    .catch(function() {
+                        // Copie automatique impossible : on affiche le lien pour une copie manuelle
+                        window.prompt('Copiez le lien de téléchargement :', url);
+                    });
             });
 
             // ---------- COPIER ----------

@@ -110,6 +110,12 @@
                             target="_blank">
                             {{ item.name|e }}
                         </a>
+                        {% if permissions.can_download %}
+                            <button type="button" class="WPFN-copy-link"
+                                    data-url="{{ download_url }}"
+                                    title="Copier le lien de téléchargement"
+                                    aria-label="Copier le lien de téléchargement de {{ item.name }}">🔗</button>
+                        {% endif %}
                     </span>
                     <span class="WPFN-item-size">({{ item.size|size_format }})</span>
                     <span class="WPFN-item-date">{{ date_i18n('d/m/Y H:i', item.mtime) }}</span>

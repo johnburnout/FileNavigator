@@ -277,6 +277,9 @@ Les erreurs apparaîtront dans `wp-content/debug.log`.
 
 ## 📝 Changelog
 
+### 1.3.6 – 9 novembre 2026
+- Nouveau : bouton 🔗 à côté de chaque fichier pour copier son lien de téléchargement (visible seulement si le téléchargement est autorisé)
+
 ### 1.3.5 – 9 novembre 2026
 - **Mises à jour signées** : chaque paquet est signé (Ed25519) hors de GitHub ; le plugin refuse d'installer une mise à jour dont la signature est absente ou invalide
 - **Changement incompatible** : `public_download` vaut désormais `false` par défaut (téléchargement réservé aux utilisateurs connectés) ; ajouter `public_download="true"` pour l'ouvrir aux visiteurs

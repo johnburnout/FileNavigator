@@ -129,6 +129,21 @@
 }
 
 /* --- Taille et date --- */
+.WPFN-copy-link {
+    flex-shrink: 0;
+    padding: 0 4px;
+    border: none;
+    background: none;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.45;
+}
+.WPFN-copy-link:hover,
+.WPFN-copy-link:focus-visible {
+    opacity: 1;
+}
+
 .WPFN-item-size,
 .WPFN-item-date {
     color: #888;
