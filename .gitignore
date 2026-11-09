@@ -27,3 +27,6 @@ cache/
 # WordPress (si vous copiez des fichiers WP dans le plugin, mais normalement non)
 wp-config.php
 *.sql
+
+# Tests
+/.phpunit.cache/

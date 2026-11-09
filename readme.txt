@@ -2,12 +2,12 @@
 Contributors: johnburnout
 Tags: file manager, file browser, upload, download, symfony
 Requires at least: 5.8
-Tested up to: 6.6
+Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.3.4
+Stable tag: 1.3.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Tested up to: 7.1
+
 A powerful file manager for WordPress, powered by Symfony Finder and Twig.
 
 == Description ==
@@ -29,7 +29,7 @@ A powerful file manager for WordPress, powered by Symfony Finder and Twig.
 * 🔍 Dynamic sorting (name, size, date) with dropdown menus
 * 📅 Date display format: **DD/MM/YYYY HH:MM**
 * 📱 Responsive and customizable (fixed width/height)
-* ⚡ All actions via AJAX (no page reload)
+* ⚡ All actions via AJAX (the list refreshes once an action completes)
 
 ### Shortcode Parameters
 
@@ -42,7 +42,7 @@ A powerful file manager for WordPress, powered by Symfony Finder and Twig.
 | `show_hidden` | Show hidden files | `true`, `false` | `false` |
 | `width` | Browser width (CSS value) | `100%`, `800px` | `100%` |
 | `height` | Browser height (scrollbars) | `500px`, `80vh` | `400px` |
-| `public_download` | Allow downloads for non-logged-in users | `true`, `false` | `true` |
+| `public_download` | Allow downloads for non-logged-in users | `true`, `false` | `false` |
 | `frame` | Affiche un cadre autour du navigateur | `true`, `false` | `false` |
 | `background` | Couleur d’arrière‑plan du conteneur et de la liste | `#f9f9f9`, `lightgray`, etc. | (vide) |
 | `toolbar_background` | Couleur d’arrière‑plan de la barre d’outils | `#e3f0fa`, `lightblue`, etc. | `#f1f1f1` (CSS) |
@@ -63,17 +63,25 @@ Browse `uploads/downloads`, show only JPG, PNG, and PDF files.
 
 Folder `uploads/documents`, sort by modification date (newest first).
 
-To allow another base folder (for example a dedicated folder outside `uploads`), add to your theme or a mu-plugin:
+`[filenavigator public_download="true"]`
 
-`add_filter('WPFN_root_base', fn() => '/home/site/documents');`
-
-`[filenavigator public_download="false"]`
-
-Downloads restricted to logged-in users only.
+Downloads allowed for non-logged-in visitors (by default, downloads are restricted to logged-in users).
 
 `[filenavigator frame="true" background="#f9f9f9" toolbar_background="#e3f0fa" breadcrumb_background="#dce8f0" width="90%" height="500px"]`
 
 Browse the `uploads` folder, 100% width, 400px height. Changed colors.
+
+### Allowed base folder
+
+For security, `root` is always confined to `wp-content/uploads`: paths leaving it (`../..`, `/`, symbolic links…) are refused. To allow another base folder, add to your theme or a mu-plugin:
+
+`add_filter('WPFN_root_base', fn() => '/home/site/documents');`
+
+### Bulk download (ZIP) limits
+
+Downloading several items or a folder is limited to 2000 files and 512 MB by default. Use the `WPFN_zip_limits` filter to change these limits (it also receives whether the visitor is logged in):
+
+`add_filter('WPFN_zip_limits', fn($limits, $loggedIn) => ['max_size' => 100 * MB_IN_BYTES, 'max_files' => 500], 10, 2);`
 
 == Installation ==
 
@@ -116,6 +124,19 @@ Dans le dossier `wp-content/uploads/` ou dans le sous‑dossier spécifié par `
 4. Menus de tri dynamique.
 
 == Changelog ==
+
+= 1.3.5 – 9 novembre 2026 =
+* Mises à jour signées : chaque paquet est signé (Ed25519) hors de GitHub ; le plugin refuse d'installer une mise à jour dont la signature est absente ou invalide
+* Changement incompatible : `public_download` vaut désormais `false` par défaut (téléchargement réservé aux utilisateurs connectés) ; ajouter `public_download="true"` pour l'ouvrir aux visiteurs
+* Sécurité : le chemin absolu du serveur n'apparaît plus dans la page (racine transmise relativement à `uploads`)
+* Sécurité : le dossier racine ne peut plus être supprimé, renommé ni déplacé
+* Sécurité : `symfony/filesystem` mis à jour en 6.4.50 (faille de sortie du dossier de base via `Path`)
+* Sécurité : téléchargement ZIP limité (2000 fichiers, 512 Mo par défaut, filtre `WPFN_zip_limits`), noms d'entrées assainis, liens symboliques sortants ignorés
+* Sécurité : nonce retiré des liens de téléchargement ; couleurs et dimensions du shortcode validées ; paramètres de tri limités à une liste blanche
+* Nouveau : plusieurs navigateurs sur une même page (paramètres d'URL `fb_dir_2`, `sort_2`… pour les suivants)
+* Correction : coller un dossier dans lui-même ou dans un sous-dossier affiche un message clair (la copie bouclait)
+* Correction : plus d'erreur fatale sur des données JSON mal formées
+* Tests automatisés (PHPUnit) lancés par GitHub Actions à chaque push et avant chaque release
 
 = 1.3.4 – 9 novembre 2026 =
 * Sécurité : l'attribut `root` est désormais confiné à `wp-content/uploads` (chemins absolus hors de ce dossier, `../` et liens symboliques refusés). **Changement incompatible** : pour un autre dossier, utiliser le filtre `WPFN_root_base`

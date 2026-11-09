@@ -257,22 +257,13 @@ class FileOperationService
     public function delete(array $paths): void
     {
         foreach ($paths as $relative) {
-            $absolute = $this->security->resolve($relative);
-            if (!$this->security->isPathSafe($absolute)) {
-                throw new \RuntimeException("Chemin non autorisé: $relative");
-            }
-            if ($this->fs->exists($absolute)) {
-                $this->fs->remove($absolute);
-            }
+            $this->fs->remove($this->resolveItem($relative));
         }
     }
 
     public function rename(string $oldRelative, string $newName): void
     {
-        $oldAbsolute = $this->security->resolve($oldRelative);
-        if (!$this->security->isPathSafe($oldAbsolute)) {
-            throw new \RuntimeException('Chemin non autorisé');
-        }
+        $oldAbsolute = $this->resolveItem($oldRelative);
         $newName = $this->validateName($newName);
         if (is_file($oldAbsolute)) {
             $this->validator->checkName($newName); // empêche par ex. photo.jpg -> photo.php
@@ -285,18 +276,22 @@ class FileOperationService
         $this->fs->rename($oldAbsolute, $newAbsolute);
     }
 
-    public function paste(array $sourcePaths, string $sourceDir, string $targetDir, string $mode): void
+    public function paste(array $sourcePaths, string $targetDir, string $mode): void
     {
         $absoluteTarget = $this->security->resolve($targetDir);
         if (!$this->security->isPathSafe($absoluteTarget)) {
             throw new \RuntimeException('Chemin cible non autorisé');
         }
         foreach ($sourcePaths as $relative) {
-            $sourceAbsolute = $this->security->resolve($relative);
-            if (!$this->security->isPathSafe($sourceAbsolute)) {
-                throw new \RuntimeException("Chemin source non autorisé: $relative");
-            }
+            $sourceAbsolute = $this->resolveItem($relative);
             $isDir = is_dir($sourceAbsolute);
+            // Un dossier ne peut pas être collé dans lui-même ni dans l'un de ses sous-dossiers
+            // (déplacement impossible, copie récursive sans fin)
+            $realSource = realpath($sourceAbsolute);
+            $realTarget = realpath($absoluteTarget);
+            if ($isDir && ($realTarget === $realSource || str_starts_with($realTarget . '/', $realSource . '/'))) {
+                throw new \RuntimeException(sprintf('Impossible de coller le dossier « %s » dans lui-même ou dans l\'un de ses sous-dossiers.', basename($relative)));
+            }
             $dest = $absoluteTarget . '/' . $this->uniqueName($absoluteTarget, basename($relative), $isDir);
             if ($mode !== 'copy') { // cut
                 $this->fs->rename($sourceAbsolute, $dest);
@@ -329,28 +324,48 @@ class FileOperationService
         if (!class_exists(\ZipArchive::class)) {
             throw new \RuntimeException('Le téléchargement groupé nécessite l\'extension PHP « zip », absente sur ce serveur.');
         }
-        $zip = new \ZipArchive();
-        $tempFile = tempnam(sys_get_temp_dir(), 'WPFN_');
-        if ($zip->open($tempFile, \ZipArchive::CREATE) !== true) {
-            throw new \RuntimeException('Impossible de créer le ZIP.');
-        }
-
+        // Inventaire préalable : chemins vérifiés, noms d'entrées dérivés du chemin réel
+        // (jamais de « ../ » dans l'archive) et limites de taille pour éviter les abus
+        $limits = (array) apply_filters('WPFN_zip_limits', ['max_size' => 512 * MB_IN_BYTES, 'max_files' => 2000], is_user_logged_in());
+        $limits = ['max_size' => (int) ($limits['max_size'] ?? 0), 'max_files' => (int) ($limits['max_files'] ?? 0)];
+        $root = rtrim($this->security->getRootPath(), '/') . '/';
+        $entries = [];
+        $totalSize = 0;
         foreach ($paths as $relative) {
             $absolute = $this->security->resolve($relative);
             if (!$this->security->isPathSafe($absolute)) {
                 throw new \RuntimeException("Chemin non autorisé: $relative");
             }
-            if (is_file($absolute)) {
-                $zip->addFile($absolute, $relative);
-            } elseif (is_dir($absolute)) {
-                $files = new \RecursiveIteratorIterator(
-                    new \RecursiveDirectoryIterator($absolute, \RecursiveDirectoryIterator::SKIP_DOTS),
-                    \RecursiveIteratorIterator::SELF_FIRST
-                );
-                foreach ($files as $file) {
-                    $zip->addFile($file->getPathname(), $relative . '/' . $file->getRelativePathname());
+            $files = is_dir($absolute)
+                ? new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($absolute, \RecursiveDirectoryIterator::SKIP_DOTS))
+                : [new \SplFileInfo($absolute)];
+            foreach ($files as $file) {
+                $real = $file->getRealPath();
+                if ($real === false || !$file->isFile() || !str_starts_with($real, $root)) {
+                    continue; // lien symbolique sortant de la racine, fichier spécial…
+                }
+                $entries[substr($real, strlen($root))] = $real;
+                $totalSize += $file->getSize();
+                if (count($entries) > $limits['max_files'] || $totalSize > $limits['max_size']) {
+                    throw new \RuntimeException(sprintf(
+                        'Sélection trop volumineuse pour un téléchargement groupé (maximum %d fichiers, %s).',
+                        $limits['max_files'],
+                        size_format($limits['max_size'])
+                    ));
                 }
             }
+        }
+        if ($entries === []) {
+            throw new \RuntimeException('Aucun fichier à télécharger.');
+        }
+
+        $zip = new \ZipArchive();
+        $tempFile = tempnam(sys_get_temp_dir(), 'WPFN_');
+        if ($zip->open($tempFile, \ZipArchive::OVERWRITE) !== true) {
+            throw new \RuntimeException('Impossible de créer le ZIP.');
+        }
+        foreach ($entries as $name => $real) {
+            $zip->addFile($real, $name);
         }
         $zip->close();
 
@@ -359,6 +374,22 @@ class FileOperationService
         readfile($tempFile);
         unlink($tempFile);
         exit;
+    }
+
+    /**
+     * Chemin absolu d'un élément existant sous la racine, à l'exclusion de la racine elle-même
+     * (qu'on ne doit ni supprimer, ni renommer, ni déplacer).
+     */
+    private function resolveItem(string $relative): string
+    {
+        $absolute = $this->security->resolve($relative);
+        if (!$this->security->isPathSafe($absolute)) {
+            throw new \RuntimeException("Chemin non autorisé: $relative");
+        }
+        if (realpath($absolute) === realpath($this->security->getRootPath())) {
+            throw new \RuntimeException('Le dossier racine ne peut pas être modifié.');
+        }
+        return $absolute;
     }
 
     /**

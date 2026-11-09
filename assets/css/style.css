@@ -53,7 +53,7 @@
     font-weight: bold;
     flex: 1;
 }
-#WPFN-clipboard-indicator {
+.WPFN-clipboard-indicator {
     margin-left: 10px;
     color: #0073aa;
 }

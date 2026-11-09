@@ -18,11 +18,30 @@ final class RootSignature
         return hash_hmac('sha256', 'WPFN_root|' . ($publicDownload ? '1' : '0') . '|' . $root, wp_salt('nonce'));
     }
 
+    /**
+     * $root est relatif à la base autorisée ('' = la base) : le chemin absolu du serveur
+     * n'est ainsi jamais exposé dans la page.
+     */
     public static function verify(string $root, bool $publicDownload, string $signature): bool
     {
         return $signature !== ''
             && hash_equals(self::sign($root, $publicDownload), $signature)
-            && self::isAllowed($root);
+            && self::resolve($root) !== null;
+    }
+
+    /** Chemin réel d'une racine relative à la base, ou null si elle n'existe pas ou en sort. */
+    public static function resolve(string $relativeRoot): ?string
+    {
+        $base = self::allowedBase();
+        $real = realpath($relativeRoot === '' ? $base : $base . '/' . ltrim($relativeRoot, '/'));
+        return $real !== false && is_dir($real) && self::isAllowed($real) ? $real : null;
+    }
+
+    /** Chemin d'un dossier (déjà vérifié par isAllowed()) relatif à la base ('' pour la base). */
+    public static function relative(string $path): string
+    {
+        $real = realpath($path) ?: $path;
+        return ltrim(substr($real, strlen(self::allowedBase())), '/');
     }
 
     /** Dossier sous lequel toute racine doit se trouver (chemin réel, sans « / » final). */

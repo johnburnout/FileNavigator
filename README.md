@@ -68,9 +68,21 @@ Le plugin se met à jour depuis les [releases GitHub](https://github.com/johnbur
    git tag v1.2.0
    git push origin main v1.2.0
    ```
-3. Le workflow GitHub Actions `.github/workflows/release.yml` installe les dépendances Composer, construit `filenavigator.zip` (avec `vendor/`) et publie la release.
+3. Le workflow GitHub Actions `.github/workflows/release.yml` lance les tests, installe les dépendances Composer, construit `filenavigator.zip` (avec `vendor/`) et publie la release.
+4. **Signer la release** depuis la machine qui détient la clé privée (le script attend la fin du workflow) :
+   ```bash
+   bin/sign-release.sh v1.2.0
+   ```
+   Il télécharge `filenavigator.zip`, le signe et publie `filenavigator.zip.sig`. **Tant que la signature n'est pas publiée, aucun site ne se met à jour.**
 
-> Seules les releases contenant l'asset `filenavigator.zip` sont proposées (l'archive source de GitHub ne contient pas `vendor/`). Les brouillons et pré-versions sont ignorés.
+> Seules les releases contenant l'asset `filenavigator.zip` **et sa signature** `filenavigator.zip.sig` sont proposées (l'archive source de GitHub ne contient pas `vendor/`). Les brouillons et pré-versions sont ignorés.
+
+### Signature des mises à jour
+
+Chaque paquet est signé (Ed25519) avec une clé privée qui ne quitte jamais la machine du mainteneur (`~/.config/filenavigator/release-signing.key`, ou `$WPFN_SIGNING_KEY`). Le plugin contient la clé publique (`GitHubUpdater::PUBLIC_KEY`) et refuse d'installer un paquet dont la signature est absente ou invalide : un compte GitHub compromis ne suffit donc pas à diffuser du code sur les sites.
+
+* **Sauvegardez la clé privée** hors de cette machine (gestionnaire de mots de passe, support chiffré). Perdue, elle ne peut pas être recréée : les sites ne pourraient plus être mis à jour automatiquement et devraient installer à la main une version contenant une nouvelle clé publique.
+* Nouvelle paire de clés : `php bin/release-keygen.php`, puis recopier la clé publique affichée dans `GitHubUpdater::PUBLIC_KEY`.
 
 ### Options (`wp-config.php`)
 
@@ -94,7 +106,7 @@ Insérez la shortcode `[filenavigator]` dans n’importe quelle page ou article.
 | `show_hidden` | Afficher les fichiers cachés | `true`, `false` | `false` |
 | `width` | Largeur du navigateur (CSS) | `100%`, `800px` | `100%` |
 | `height` | Hauteur du navigateur (barre de défilement) | `500px`, `80vh` | `400px` |
-| `public_download` | Autoriser les téléchargements sans connexion | `true`, `false` | `true` |
+| `public_download` | Autoriser les téléchargements sans connexion | `true`, `false` | `false` |
 | `frame` | Affiche un cadre autour du navigateur | `true`, `false` | `false` |
 | `background` | Couleur d’arrière‑plan du conteneur et de la liste | `#f9f9f9`, `lightgray`, etc. | (vide) |
 | `toolbar_background` | Couleur d’arrière‑plan de la barre d’outils | `#e3f0fa`, `lightblue`, etc. | `#f1f1f1` (CSS) |
@@ -128,6 +140,16 @@ Explorer le dossier `uploads/downloads`, afficher uniquement les fichiers JPG, P
 ```
 Dossier `uploads/documents`, tri par date de modification du plus récent au plus ancien.
 
+```text
+[filenavigator public_download="true"]
+```
+Téléchargement autorisé aux visiteurs non connectés (par défaut, il est réservé aux utilisateurs connectés).
+
+```text
+[filenavigator frame="true" background="#f9f9f9" toolbar_background="#e3f0fa" breadcrumb_background="#dce8f0" width="90%" height="500px"]
+```
+Navigateur dans le dossier `uploads`, largeur 100%, hauteur 400px. Modification des couleurs.
+
 ### Dossier de base autorisé
 
 Pour des raisons de sécurité, `root` est toujours confiné à `wp-content/uploads` : un chemin qui en sort (`../..`, `/`, lien symbolique…) est refusé. Pour autoriser une autre base, ajoutez dans votre thème ou un mu-plugin :
@@ -136,15 +158,17 @@ Pour des raisons de sécurité, `root` est toujours confiné à `wp-content/uplo
 add_filter('WPFN_root_base', fn() => '/home/site/documents');
 ```
 
-```text
-[filenavigator public_download="false"]
-```
-Téléchargement uniquement autorisé aux utilisateurs connectés.
+### Limites du téléchargement groupé (ZIP)
 
-```text
-[filenavigator frame="true" background="#f9f9f9" toolbar_background="#e3f0fa" breadcrumb_background="#dce8f0" width="90%" height="500px"]
+Le téléchargement de plusieurs éléments ou d’un dossier est limité par défaut à 2000 fichiers et 512 Mo, pour éviter qu’un visiteur ne surcharge le serveur. Le filtre `WPFN_zip_limits` permet de les ajuster ; il reçoit aussi un booléen indiquant si le visiteur est connecté :
+
+```php
+add_filter('WPFN_zip_limits', function (array $limits, bool $loggedIn) {
+    return $loggedIn
+        ? ['max_size' => 2 * GB_IN_BYTES, 'max_files' => 10000]
+        : ['max_size' => 100 * MB_IN_BYTES, 'max_files' => 500];
+}, 10, 2);
 ```
-Navigateur dans le dossier `uploads`, largeur 100%, hauteur 400px. Modification des couleurs.
 
 ---
 
@@ -205,14 +229,20 @@ filenavigator/
 │   ├── css/style.css
 │   └── js/main.js
 ├── src/
+│   ├── Ajax/AjaxController.php
 │   ├── FileNavigator/
 │   │   ├── FileNavigatorService.php
 │   │   ├── FileOperationService.php
-│   │   └── SecurityChecker.php
-│   └── Shortcode/
-│       └── FileNavigatorShortcode.php
+│   │   ├── RootSignature.php
+│   │   ├── SecurityChecker.php
+│   │   └── UploadValidator.php
+│   ├── Shortcode/
+│   │   └── FileNavigatorShortcode.php
+│   └── Updater/GitHubUpdater.php
+├── bin/                   (scripts de signature des releases, hors archive)
 ├── templates/
 │   └── filenavigator.twig
+├── tests/                 (tests PHPUnit, hors archive)
 ├── vendor/                (généré par Composer)
 ├── composer.json
 ├── composer.lock
@@ -222,6 +252,16 @@ filenavigator/
 ```
 
 ### Tests
+
+Les tests automatisés (PHPUnit) couvrent les composants de sécurité : confinement des chemins, signature du dossier racine, validation des uploads, opérations sur les fichiers, signature des mises à jour. Ils ne nécessitent pas WordPress :
+
+```bash
+composer test
+```
+
+Ils sont lancés par GitHub Actions à chaque push sur `main`, sur chaque pull request et avant chaque release (PHP 8.1, 8.3 et 8.4), avec `composer audit`.
+
+### Débogage
 
 Activez le mode debug dans `wp-config.php` :
 
@@ -236,6 +276,19 @@ Les erreurs apparaîtront dans `wp-content/debug.log`.
 ---
 
 ## 📝 Changelog
+
+### 1.3.5 – 9 novembre 2026
+- **Mises à jour signées** : chaque paquet est signé (Ed25519) hors de GitHub ; le plugin refuse d'installer une mise à jour dont la signature est absente ou invalide
+- **Changement incompatible** : `public_download` vaut désormais `false` par défaut (téléchargement réservé aux utilisateurs connectés) ; ajouter `public_download="true"` pour l'ouvrir aux visiteurs
+- Sécurité : le chemin absolu du serveur n'apparaît plus dans la page (racine transmise relativement à `uploads`)
+- Sécurité : le dossier racine ne peut plus être supprimé, renommé ni déplacé
+- Sécurité : `symfony/filesystem` mis à jour en 6.4.50 (faille de sortie du dossier de base via `Path`)
+- Sécurité : téléchargement ZIP limité (2000 fichiers, 512 Mo par défaut, filtre `WPFN_zip_limits`), noms d'entrées assainis, liens symboliques sortants ignorés
+- Sécurité : nonce retiré des liens de téléchargement ; couleurs et dimensions du shortcode validées ; paramètres de tri limités à une liste blanche
+- Nouveau : plusieurs navigateurs sur une même page (paramètres d'URL `fb_dir_2`, `sort_2`… pour les suivants)
+- Correction : coller un dossier dans lui-même ou dans un sous-dossier affiche un message clair (la copie bouclait)
+- Correction : plus d'erreur fatale sur des données JSON mal formées
+- Tests automatisés (PHPUnit) lancés par GitHub Actions à chaque push et avant chaque release
 
 ### 1.3.4 – 9 novembre 2026
 - **Sécurité** : l’attribut `root` est désormais confiné à `wp-content/uploads` (chemins absolus hors de ce dossier, `../` et liens symboliques refusés). **Changement incompatible** : pour un autre dossier, utiliser le filtre `WPFN_root_base` (voir « Dossier de base autorisé »)

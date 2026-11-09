@@ -1,15 +1,13 @@
 (function($) {
     'use strict';
 
+    // Méthodes communes ; chaque navigateur de la page est un objet créé par Object.create(plugin)
     const plugin = {
-        init: function() {
-            this.container = $('.WPFN-filenavigator');
-            if (!this.container.length) {
-                console.warn('File Navigator: conteneur non trouvé.');
-                return;
-            }
+        init: function($container) {
+            this.container = $container;
 
             // Récupération des données depuis les attributs data
+            this.paramSuffix = this.container.attr('data-param-suffix') || '';
             this.root = this.container.attr('data-root') || '';
             this.ajaxurl = this.container.data('ajaxurl');
             this.nonce = this.container.data('nonce');
@@ -24,10 +22,8 @@
             this.maxFiles = parseInt(this.container.attr('data-max-files'), 10) || 20;
             this.busy = false;
 
-            console.log('File Navigator initialisé avec root:', this.root);
-
-            this.status = $('#WPFN-status');
-            this.clipboardIndicator = $('#WPFN-clipboard-indicator');
+            this.status = this.container.find('.WPFN-status');
+            this.clipboardIndicator = this.container.find('.WPFN-clipboard-indicator');
             this.currentDir = this.getCurrentDir();
 
             this.bindEvents();
@@ -35,12 +31,14 @@
                 this.bindDropZone();
             }
             this.updateClipboardIndicator();
+            // Presse-papiers modifié par un autre navigateur de la page
+            $(document).on('WPFN:clipboard', () => this.updateClipboardIndicator());
         },
 
-        // Récupère le dossier courant depuis l'URL (paramètre fb_dir)
+        // Récupère le dossier courant depuis l'URL (paramètre fb_dir, fb_dir_2…)
         getCurrentDir: function() {
             const params = new URLSearchParams(window.location.search);
-            return params.get('fb_dir') || '';
+            return params.get('fb_dir' + this.paramSuffix) || '';
         },
 
         // Met à jour l'affichage du presse-papiers
@@ -64,18 +62,22 @@
             }
         },
 
-        // Écriture dans le presse-papiers
+        // Écriture dans le presse-papiers (les chemins sont relatifs à la racine de ce navigateur)
         setClipboard: function(paths, mode) {
-            if (!paths || paths.length === 0) {
-                localStorage.removeItem('WPFN_clipboard');
-            } else {
-                localStorage.setItem('WPFN_clipboard', JSON.stringify({
-                    paths: paths,
-                    mode: mode,
-                    sourceDir: this.currentDir
-                }));
+            try {
+                if (!paths || paths.length === 0) {
+                    localStorage.removeItem('WPFN_clipboard');
+                } else {
+                    localStorage.setItem('WPFN_clipboard', JSON.stringify({
+                        paths: paths,
+                        mode: mode,
+                        root: this.root
+                    }));
+                }
+            } catch (e) {
+                this.setStatus('Presse-papiers indisponible dans ce navigateur (stockage local bloqué).', true);
             }
-            this.updateClipboardIndicator();
+            $(document).trigger('WPFN:clipboard');
         },
 
         // Récupère les chemins sélectionnés
@@ -96,6 +98,7 @@
 
         // Appel AJAX générique (sans fichier)
         ajax: function(action, data, success, error) {
+            const self = this;
             data.action = action;
             data.nonce = this.nonce;
             data.root = this.root;
@@ -107,14 +110,14 @@
                     if (success) success(response.data);
                 } else {
                     if (error) error(response.data);
-                    else plugin.setStatus(
+                    else self.setStatus(
                         'Erreur: ' + (response.data && response.data.message ? response.data.message : 'Erreur inconnue'),
                         true
                     );
                 }
             }).fail(function(jqXHR) {
                 console.error('AJAX error:', jqXHR);
-                plugin.setStatus('Erreur de connexion au serveur.', true);
+                self.setStatus('Erreur de connexion au serveur.', true);
             });
         },
 
@@ -556,18 +559,19 @@
             const self = this;
 
             // ---------- UPLOAD ----------
-            $('.WPFN-btn-upload').on('click', function() {
-                $('#WPFN-upload-input').click();
+            const $c = self.container;
+            $c.find('.WPFN-btn-upload').on('click', function() {
+                $c.find('.WPFN-upload-input').trigger('click');
             });
 
-            $('#WPFN-upload-input').on('change', function() {
+            $c.find('.WPFN-upload-input').on('change', function() {
                 const files = Array.from(this.files || []).map(f => ({ file: f, path: f.name }));
                 this.value = ''; // réinitialiser
                 if (files.length) self.startUpload(files, []);
             });
 
             // ---------- TÉLÉCHARGER (DL) ----------
-            $('.WPFN-btn-download').on('click', function() {
+            $c.find('.WPFN-btn-download').on('click', function() {
                 const selected = self.getSelectedPaths();
                 if (selected.length === 0) {
                     self.setStatus('Sélectionnez au moins un élément.', true);
@@ -576,7 +580,6 @@
                 const url = self.ajaxurl +
                     '?action=WPFN_download' +
                     '&paths=' + encodeURIComponent(JSON.stringify(selected)) +
-                    '&nonce=' + self.nonce +
                     '&root=' + encodeURIComponent(self.root) +
                     '&root_sig=' + encodeURIComponent(self.rootSig) +
                     '&root_pd=' + encodeURIComponent(self.rootPd);
@@ -585,7 +588,7 @@
             });
 
             // ---------- COPIER ----------
-            $('.WPFN-btn-copy').on('click', function() {
+            $c.find('.WPFN-btn-copy').on('click', function() {
                 const selected = self.getSelectedPaths();
                 if (selected.length === 0) {
                     self.setStatus('Sélectionnez au moins un élément.', true);
@@ -596,7 +599,7 @@
             });
 
             // ---------- COUPER ----------
-            $('.WPFN-btn-cut').on('click', function() {
+            $c.find('.WPFN-btn-cut').on('click', function() {
                 const selected = self.getSelectedPaths();
                 if (selected.length === 0) {
                     self.setStatus('Sélectionnez au moins un élément.', true);
@@ -607,17 +610,20 @@
             });
 
             // ---------- COLLER ----------
-            $('.WPFN-btn-paste').on('click', function() {
+            $c.find('.WPFN-btn-paste').on('click', function() {
                 const clipboard = self.getClipboard();
                 if (!clipboard || !clipboard.paths || clipboard.paths.length === 0) {
                     self.setStatus('Presse-papiers vide.', true);
+                    return;
+                }
+                if ((clipboard.root || '') !== self.root) {
+                    self.setStatus('Ce presse-papiers provient d\'un autre navigateur de fichiers : collez-le dans celui-ci.', true);
                     return;
                 }
 
                 const data = {
                     paths: JSON.stringify(clipboard.paths),
                     mode: clipboard.mode,
-                    source_dir: clipboard.sourceDir || '',
                     // Si currentDir est vide, on utilise '.' pour désigner la racine
                     target_dir: self.currentDir || '.'
                 };
@@ -632,7 +638,7 @@
             });
 
             // ---------- SUPPRIMER ----------
-            $('.WPFN-btn-delete').on('click', function() {
+            $c.find('.WPFN-btn-delete').on('click', function() {
                 const selected = self.getSelectedPaths();
                 if (selected.length === 0) {
                     self.setStatus('Sélectionnez au moins un élément.', true);
@@ -647,17 +653,17 @@
             });
             
             // ---------- TRI ----------
-            $('.WPFN-sort-select, .WPFN-order-select').on('change', function() {
-                const sort = $('#WPFN-sort-select').val();
-                const order = $('#WPFN-order-select').val();
+            $c.find('.WPFN-sort-select, .WPFN-order-select').on('change', function() {
+                const sort = $c.find('.WPFN-sort-select').val();
+                const order = $c.find('.WPFN-order-select').val();
                 const currentUrl = new URL(window.location.href);
-                currentUrl.searchParams.set('sort', sort);
-                currentUrl.searchParams.set('order', order);
+                currentUrl.searchParams.set('sort' + self.paramSuffix, sort);
+                currentUrl.searchParams.set('order' + self.paramSuffix, order);
                 window.location.href = currentUrl.toString();
             });
             
             // ---------- NOUVEAU DOSSIER ----------
-            $('.WPFN-btn-mkdir').on('click', function() {
+            $c.find('.WPFN-btn-mkdir').on('click', function() {
                 const dirName = prompt('Nom du nouveau dossier :');
                 if (dirName === null) return; // annulé
                 const name = dirName.trim();
@@ -675,7 +681,7 @@
             });
 
             // ---------- RENOMMER ----------
-            $('.WPFN-btn-rename').on('click', function() {
+            $c.find('.WPFN-btn-rename').on('click', function() {
                 const selected = self.getSelectedPaths();
                 if (selected.length !== 1) {
                     self.setStatus('Sélectionnez un seul élément pour le renommer.', true);
@@ -693,7 +699,7 @@
             });
 
             // Confirmation de renommage
-            $(document).on('click', '.WPFN-rename-confirm', function() {
+            $c.on('click', '.WPFN-rename-confirm', function() {
                 const $item = $(this).closest('.WPFN-item');
                 const oldPath = $item.data('path');
                 const $input = $item.find('.WPFN-rename-input');
@@ -714,7 +720,7 @@
             });
 
             // Annulation du renommage
-            $(document).on('click', '.WPFN-rename-cancel', function() {
+            $c.on('click', '.WPFN-rename-cancel', function() {
                 const $item = $(this).closest('.WPFN-item');
                 $item.find('.WPFN-rename-wrapper').hide();
                 $item.find('.WPFN-item-name').show();
@@ -724,7 +730,9 @@
 
     // Initialisation au chargement du DOM
     $(document).ready(function() {
-        plugin.init();
+        $('.WPFN-filenavigator').each(function() {
+            Object.create(plugin).init($(this));
+        });
     });
 
 })(jQuery);

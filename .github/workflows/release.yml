@@ -10,10 +10,14 @@ permissions:
   contents: write
 
 jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
+
   build:
+    needs: tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Vérifier que le tag correspond aux versions du plugin
         run: |
@@ -40,7 +44,8 @@ jobs:
           rsync -a ./ build/filenavigator/ \
             --exclude '.git' --exclude '.github' --exclude '.gitignore' \
             --exclude 'build' --exclude '.DS_Store' --exclude 'structure.txt' \
-            --exclude 'composer.json' --exclude 'composer.lock' --exclude 'tests'
+            --exclude 'composer.json' --exclude 'composer.lock' --exclude 'tests' \
+            --exclude 'bin' --exclude 'phpunit.xml.dist' --exclude '.phpunit.cache'
           cd build && zip -rq filenavigator.zip filenavigator
 
       - name: Notes de version

@@ -57,7 +57,8 @@ final class AjaxController
     public static function prepareUpload(): void
     {
         self::handle('upload_files', function () {
-            $items = self::json('items') ?? [];
+            // Seuls les éléments de type objet sont retenus (entrée forgée)
+            $items = array_values(array_filter(self::json('items') ?? [], 'is_array'));
             // Remplacer ou fusionner modifie/supprime l'existant : droit de suppression requis
             foreach ($items as $item) {
                 if (in_array($item['action'] ?? 'new', ['replace', 'merge'], true) && !current_user_can('delete_posts')) {
@@ -74,7 +75,7 @@ final class AjaxController
     {
         // Pas de nonce ni de capacité : lien direct, ouvert aux visiteurs si public_download
         // Seuls les chemins de type chaîne sont retenus (évite un TypeError sur entrée forgée)
-        $paths = array_values(array_filter(self::json('paths', $_GET) ?? [], 'is_string'));
+        $paths = self::paths($_GET);
         if (empty($paths)) {
             wp_die('Aucun fichier sélectionné.');
         }
@@ -95,7 +96,7 @@ final class AjaxController
     public static function delete(): void
     {
         self::handle('delete_posts', function () {
-            $paths = self::json('paths');
+            $paths = self::paths();
             if (empty($paths)) {
                 throw new \RuntimeException('Aucun élément sélectionné.');
             }
@@ -122,13 +123,13 @@ final class AjaxController
     public static function paste(): void
     {
         self::handle('edit_posts', function () {
-            $paths = self::json('paths');
+            $paths = self::paths();
             $targetDir = self::text('target_dir');
             if (empty($paths) || $targetDir === '') {
                 throw new \RuntimeException('Paramètres manquants.');
             }
             $mode = self::text('mode') ?: 'copy';
-            self::service()->paste($paths, self::text('source_dir'), $targetDir, $mode);
+            self::service()->paste($paths, $targetDir, $mode);
             return null;
         });
     }
@@ -175,7 +176,8 @@ final class AjaxController
 
     /**
      * Dossier racine de la requête (après vérification de sa signature) et option public_download.
-     * Sans « root », on utilise le dossier uploads de WordPress.
+     * « root » est relatif à la base autorisée ; sans « root » ni signature, on utilise la base
+     * elle-même, sans téléchargement public.
      * @return array{0: string, 1: bool}
      */
     private static function root(bool $json = true): array
@@ -185,17 +187,18 @@ final class AjaxController
         $sig = isset($src['root_sig']) && is_string($src['root_sig']) ? wp_unslash($src['root_sig']) : '';
         $publicDownload = isset($src['root_pd']) && $src['root_pd'] === '1';
 
-        if ($root === '') {
-            return [wp_upload_dir()['basedir'], false];
+        if ($root === '' && $sig === '') {
+            return [RootSignature::allowedBase(), false];
         }
-        if (!RootSignature::verify($root, $publicDownload, $sig)) {
+        $path = RootSignature::verify($root, $publicDownload, $sig) ? RootSignature::resolve($root) : null;
+        if ($path === null) {
             $message = 'Dossier racine non autorisé.';
             if ($json) {
                 wp_send_json_error(['message' => $message], 403);
             }
             wp_die(esc_html($message), '', ['response' => 403]);
         }
-        return [$root, $publicDownload];
+        return [$path, $publicDownload];
     }
 
     private static function currentDir(): string
@@ -208,6 +211,12 @@ final class AjaxController
     {
         // Un paramètre envoyé en tableau (key[]=...) est ignoré
         return isset($_POST[$key]) && is_string($_POST[$key]) ? sanitize_text_field(wp_unslash($_POST[$key])) : '';
+    }
+
+    /** Liste de chemins (champ JSON « paths ») : seules les chaînes sont retenues. */
+    private static function paths(?array $src = null): array
+    {
+        return array_values(array_filter(self::json('paths', $src) ?? [], 'is_string'));
     }
 
     /** Champ JSON (tableau) de $_POST ou de $src ; null si absent ou invalide. */

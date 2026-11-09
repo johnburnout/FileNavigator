@@ -11,6 +11,10 @@ namespace WPFN\Updater;
  *  - le paquet installé est l'asset ZIP attaché à la release (construit par
  *    GitHub Actions, il contient le dossier vendor/). Sans asset, aucune mise
  *    à jour n'est proposée : l'archive source de GitHub ne contient pas vendor/.
+ *  - le paquet doit être accompagné de sa signature Ed25519 (asset « .sig »,
+ *    produit hors de GitHub par bin/sign-release.sh) ; elle est vérifiée avec
+ *    PUBLIC_KEY avant toute installation. Sans signature valide, rien n'est
+ *    installé : un compte GitHub compromis ne suffit pas à diffuser du code.
  *
  * Constantes optionnelles (wp-config.php) :
  *  - WPFN_GITHUB_TOKEN        : jeton GitHub (dépôt privé ou limite de requêtes) ;
@@ -19,7 +23,10 @@ namespace WPFN\Updater;
  */
 class GitHubUpdater
 {
-    private const CACHE_KEY = 'wpfn_github_release';
+    /** Clé publique Ed25519 des releases (la clé privée ne quitte pas la machine du mainteneur). */
+    public const PUBLIC_KEY = 'dAsn32w7ibPhEvd/BmGuj965m0FM7sTRQIJJOO1KFRk=';
+
+    private const CACHE_KEY = 'wpfn_github_release_v2'; // v2 : inclut l'URL de la signature
     private const CACHE_TTL = 6 * HOUR_IN_SECONDS;
     private const ERROR_TTL = 30 * MINUTE_IN_SECONDS;
 
@@ -48,6 +55,7 @@ class GitHubUpdater
     {
         add_filter('pre_set_site_transient_update_plugins', [$this, 'injectUpdate']);
         add_filter('plugins_api', [$this, 'pluginInfo'], 20, 3);
+        add_filter('upgrader_pre_download', [$this, 'verifiedDownload'], 10, 4);
         add_filter('upgrader_source_selection', [$this, 'fixSourceFolder'], 10, 4);
         add_filter('http_request_args', [$this, 'authorizeDownload'], 10, 2);
         add_filter('auto_update_plugin', [$this, 'forceAutoUpdate'], 10, 2);
@@ -102,21 +110,21 @@ class GitHubUpdater
             return null;
         }
 
-        $package = null;
+        $urls = [];
         foreach ($json['assets'] ?? [] as $asset) {
-            if (($asset['name'] ?? '') === $this->assetName) {
-                // Dépôt privé : l'URL publique ne fonctionne pas, on passe par l'API.
-                $package = $this->token() ? $asset['url'] : $asset['browser_download_url'];
-                break;
-            }
+            // Dépôt privé : l'URL publique ne fonctionne pas, on passe par l'API.
+            $urls[$asset['name'] ?? ''] = $this->token() ? ($asset['url'] ?? '') : ($asset['browser_download_url'] ?? '');
         }
-        if (!$package) {
-            return null; // Pas d'asset construit : on ne propose rien.
+        $package = $urls[$this->assetName] ?? '';
+        $signature = $urls[$this->assetName . '.sig'] ?? '';
+        if ($package === '' || $signature === '') {
+            return null; // Pas d'asset construit ou pas encore signé : on ne propose rien.
         }
 
         return [
             'version'   => ltrim($json['tag_name'], 'vV'),
             'package'   => $package,
+            'signature' => $signature,
             'url'       => $json['html_url'] ?? $this->repoUrl(),
             'date'      => $json['published_at'] ?? '',
             'changelog' => $json['body_html'] ?? nl2br(esc_html($json['body'] ?? '')),
@@ -229,6 +237,56 @@ class GitHubUpdater
     }
 
     /**
+     * Télécharge le paquet et vérifie sa signature avant que WordPress ne l'installe.
+     * Toute erreur (signature absente, invalide, réseau) annule la mise à jour.
+     */
+    public function verifiedDownload($reply, $package, $upgrader = null, $hookExtra = [])
+    {
+        if ($reply !== false) {
+            return $reply;
+        }
+        $release = $this->getRelease();
+        if (($release['package'] ?? '') !== $package) {
+            $release = $this->getRelease(true); // cache périmé ?
+        }
+        $ours = ($hookExtra['plugin'] ?? '') === $this->basename;
+        if (($release['package'] ?? '') !== $package) {
+            // Paquet inconnu : s'il vise ce plugin, on refuse ; sinon ce n'est pas notre affaire.
+            return $ours
+                ? new \WP_Error('wpfn_unknown_package', 'File Navigator : paquet de mise à jour inconnu, installation annulée.')
+                : $reply;
+        }
+
+        $file = download_url($package);
+        if (is_wp_error($file)) {
+            return $file;
+        }
+        $response = wp_remote_get($release['signature'], ['timeout' => 15]);
+        $signature = is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200
+            ? false
+            : base64_decode(trim(wp_remote_retrieve_body($response)), true);
+
+        if (!self::verifySignature((string) file_get_contents($file), $signature ?: '')) {
+            @unlink($file);
+            return new \WP_Error('wpfn_bad_signature', 'File Navigator : la signature du paquet de mise à jour est absente ou invalide, installation annulée.');
+        }
+        return $file;
+    }
+
+    /** Signature Ed25519 détachée de $data, vérifiée avec PUBLIC_KEY (ou $publicKey, en base64, pour les tests). */
+    public static function verifySignature(string $data, string $signature, ?string $publicKey = null): bool
+    {
+        if (strlen($signature) !== SODIUM_CRYPTO_SIGN_BYTES) {
+            return false;
+        }
+        try {
+            return sodium_crypto_sign_verify_detached($signature, $data, base64_decode($publicKey ?? self::PUBLIC_KEY));
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
+
+    /**
      * Garantit que le dossier extrait porte le nom du dossier installé
      * (sinon WordPress installerait le plugin dans un nouveau dossier).
      */
@@ -327,7 +385,7 @@ class GitHubUpdater
         $messages = [
             'available' => ['warning', 'File Navigator : une nouvelle version est disponible.'],
             'uptodate'  => ['success', 'File Navigator est à jour (version ' . esc_html($this->version) . ').'],
-            'error'     => ['error', 'File Navigator : impossible de récupérer la dernière release sur GitHub (aucune release publiée avec l\'asset ' . esc_html($this->assetName) . ', ou API indisponible).'],
+            'error'     => ['error', 'File Navigator : impossible de récupérer la dernière release sur GitHub (aucune release publiée avec l\'asset ' . esc_html($this->assetName) . ' et sa signature ' . esc_html($this->assetName) . '.sig, ou API indisponible).'],
         ];
         if (isset($messages[$status])) {
             printf('<div class="notice notice-%s is-dismissible"><p>%s</p></div>', $messages[$status][0], $messages[$status][1]);

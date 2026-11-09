@@ -2,10 +2,14 @@
 namespace WPFN\Shortcode;
 
 use WPFN\FileNavigator\FileNavigatorService;
+use WPFN\FileNavigator\RootSignature;
 
 class FileNavigatorShortcode
 {
     private static ?\Twig\Environment $twig = null;
+
+    /** Numéro du navigateur dans la page (plusieurs shortcodes possibles). */
+    private static int $instance = 0;
 
     private static function getTwig(): \Twig\Environment
     {
@@ -29,17 +33,9 @@ class FileNavigatorShortcode
             self::$twig->addFilter(new \Twig\TwigFilter('size_format', 'size_format'));
             self::$twig->addFilter(new \Twig\TwigFilter('date_i18n', 'date_i18n'));
 
-            // Filtre pour l'URL des fichiers
-            self::$twig->addFilter(new \Twig\TwigFilter('WPFN_file_url', function($relative, $rootPath) {
-                if (empty($relative)) {
-                    return '';
-                }
-                $absolute = $rootPath . '/' . ltrim($relative, '/');
-                if (strpos($absolute, ABSPATH) === 0) {
-                    return home_url(str_replace(ABSPATH, '', $absolute));
-                }
-                return $absolute;
-            }));
+            // URL publique d'un fichier ('' s'il n'est pas servi directement par le serveur web :
+            // le template utilise alors le lien de téléchargement)
+            self::$twig->addFilter(new \Twig\TwigFilter('WPFN_file_url', [self::class, 'publicUrl']));
         }
         return self::$twig;
     }
@@ -52,7 +48,7 @@ class FileNavigatorShortcode
             'sort' => 'name',
             'order' => 'asc',
             'show_hidden' => 'false',
-            'public_download' => 'true',
+            'public_download' => 'false',
             'width' => '100%',
             'height' => '400px',
             'frame' => 'false',           // NOUVEAU
@@ -61,16 +57,22 @@ class FileNavigatorShortcode
             'breadcrumb_background' => '', // NOUVEAU
         ], $atts, 'filenavigator');
 
-        // Récupération des paramètres GET pour le tri
-        $atts['sort'] = isset($_GET['sort']) ? sanitize_text_field($_GET['sort']) : $atts['sort'];
-        $atts['order'] = isset($_GET['order']) ? sanitize_text_field($_GET['order']) : $atts['order'];
+        // Paramètres d'URL propres à chaque navigateur de la page : « fb_dir », « sort », « order »
+        // pour le premier (liens existants inchangés), « fb_dir_2 », « sort_2 »… pour les suivants
+        $instance = ++self::$instance;
+        $suffix = $instance === 1 ? '' : '_' . $instance;
 
-        $rootPath = self::getRootPath($atts['root']);
+        // Tri : paramètres GET prioritaires, valeurs limitées à une liste blanche
+        $atts['sort'] = self::choice(self::query('sort' . $suffix) ?? $atts['sort'], ['name', 'size', 'mtime'], 'name');
+        $atts['order'] = self::choice(self::query('order' . $suffix) ?? $atts['order'], ['asc', 'desc'], 'asc');
+
+        $rootPath = self::getRootPath((string) $atts['root']);
         if ($rootPath === '') {
             return '<p style="color:red;">Erreur : dossier racine invalide (il doit exister et se trouver dans wp-content/uploads).</p>';
         }
+        $rootRel = RootSignature::relative($rootPath);
 
-        $currentDir = isset($_GET['fb_dir']) ? sanitize_text_field($_GET['fb_dir']) : '';
+        $currentDir = self::query('fb_dir' . $suffix) ?? '';
         $currentDir = str_replace('..', '', $currentDir);
 
         $extensions = array_map('trim', explode(',', $atts['extensions']));
@@ -108,23 +110,26 @@ class FileNavigatorShortcode
                 'breadcrumb' => $breadcrumb,
                 'current_dir' => $currentDir,
                 'root_path' => $rootPath,
+                'root_rel' => $rootRel,
+                'instance' => $instance,
+                'param_suffix' => $suffix,
                 'ajax_url' => admin_url('admin-ajax.php'),
                 'nonce' => wp_create_nonce(\WPFN\Ajax\AjaxController::NONCE_ACTION),
                 'permissions' => $permissions,
-                'root_sig' => \WPFN\FileNavigator\RootSignature::sign($rootPath, $public_download),
+                'root_sig' => RootSignature::sign($rootRel, $public_download),
                 'root_pd' => $public_download ? '1' : '0',
                 'allowed_ext' => implode(',', (new \WPFN\FileNavigator\UploadValidator())->allowedExtensions()),
                 'blocked_ext' => implode(',', \WPFN\FileNavigator\UploadValidator::BLOCKED_EXTENSIONS),
                 'max_upload' => (int) wp_max_upload_size(),
                 'max_files' => (int) ini_get('max_file_uploads') ?: 20,
-                'container_width' => $atts['width'],
-                'container_height' => $atts['height'],
+                'container_width' => self::cssLength($atts['width'], '100%'),
+                'container_height' => self::cssLength($atts['height'], '400px'),
                 'current_sort' => $atts['sort'],
                 'current_order' => $atts['order'],
                 'frame' => filter_var($atts['frame'], FILTER_VALIDATE_BOOLEAN),
-                'background' => sanitize_text_field($atts['background']),                
-                'toolbar_background' => sanitize_text_field($atts['toolbar_background']),
-                'breadcrumb_background' => sanitize_text_field($atts['breadcrumb_background']),
+                'background' => self::cssColor($atts['background']),
+                'toolbar_background' => self::cssColor($atts['toolbar_background']),
+                'breadcrumb_background' => self::cssColor($atts['breadcrumb_background']),
             ]);
 
         } catch (\Exception $e) {
@@ -139,14 +144,55 @@ class FileNavigatorShortcode
      */
     private static function getRootPath(string $rootParam): string
     {
-        $base = \WPFN\FileNavigator\RootSignature::allowedBase();
-        $path = str_starts_with($rootParam, '/') ? $rootParam : $base . '/' . $rootParam;
-        $real = realpath($path);
+        if (!str_starts_with($rootParam, '/')) {
+            return RootSignature::resolve($rootParam) ?? '';
+        }
+        $real = realpath($rootParam);
+        return $real !== false && is_dir($real) && RootSignature::isAllowed($real) ? $real : '';
+    }
 
-        if ($real === false || !is_dir($real) || !\WPFN\FileNavigator\RootSignature::isAllowed($real)) {
+    /** URL publique d'un fichier situé dans wp-content/uploads, sinon ''. */
+    public static function publicUrl(string $relative, string $rootPath): string
+    {
+        if ($relative === '') {
             return '';
         }
-        return $real;
+        $uploads = wp_upload_dir();
+        $base = rtrim(realpath($uploads['basedir']) ?: $uploads['basedir'], '/');
+        $absolute = rtrim($rootPath, '/') . '/' . ltrim($relative, '/');
+        if (!str_starts_with($absolute, $base . '/')) {
+            return '';
+        }
+        $segments = explode('/', substr($absolute, strlen($base) + 1));
+        return rtrim($uploads['baseurl'], '/') . '/' . implode('/', array_map('rawurlencode', $segments));
+    }
+
+    /** Paramètre GET texte, déséchappé et nettoyé (null si absent ou non textuel). */
+    private static function query(string $key): ?string
+    {
+        return isset($_GET[$key]) && is_string($_GET[$key]) ? sanitize_text_field(wp_unslash($_GET[$key])) : null;
+    }
+
+    private static function choice(string $value, array $allowed, string $default): string
+    {
+        return in_array($value, $allowed, true) ? $value : $default;
+    }
+
+    /** Couleur CSS sûre (#hex, rgb()/rgba()/hsl()/hsla(), nom) ; '' si invalide. */
+    private static function cssColor(string $value): string
+    {
+        $value = trim($value);
+        $ok = preg_match('/^#[0-9a-f]{3,8}$/i', $value)
+            || preg_match('/^(rgb|hsl)a?\(\s*[0-9.,%\s\/]+\)$/i', $value)
+            || preg_match('/^[a-z]{3,30}$/i', $value);
+        return $ok ? $value : '';
+    }
+
+    /** Longueur CSS sûre (nombre + unité, ou auto) ; $default si invalide. */
+    private static function cssLength(string $value, string $default): string
+    {
+        $value = trim($value);
+        return preg_match('/^(auto|\d+(\.\d+)?(px|%|em|rem|vh|vw|vmin|vmax|ch)?)$/i', $value) ? $value : $default;
     }
 
     private static function buildBreadcrumb(string $root, string $currentRelative): array
